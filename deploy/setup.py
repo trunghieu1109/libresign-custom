@@ -13,6 +13,7 @@ import pwd
 import re
 import secrets
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -26,7 +27,7 @@ NEXTCLOUD_REVISION = "0e4914d191670dd79f9a554f3d67cbc3e0b66059"
 PHP_IMAGE = "ghcr.io/librecodecoop/nextcloud-dev-php83@sha256:07428761414953a6fa57fd45cf8d4b44352c0fc36774d10b5e8ee091078915c7"
 SCOPES = ["certificates:read", "certificates:write", "certificates:revoke", "signing:read", "signing:write"]
 OTP_CHANNELS = ("email", "sms", "email_sms")
-SERVICES = ["nextcloud", "redis", "mailpit", "nginx", "proxy-coordinator"]
+SERVICES = ["nextcloud", "redis", "mailpit", "nginx"]
 DEFAULT_RUNTIME = SOURCE.parent / (".libresign-runtime-" + hashlib.sha256(str(SOURCE).encode()).hexdigest()[:8])
 
 
@@ -60,10 +61,13 @@ def default_config(source=SOURCE):
     project = "libresign-custom-" + suffix
     return {
         "projectName": project,
-        "publicUrl": f"https://{project}.localhost",
+        "publicUrl": "https://localhost:18443",
         "publishHttp": False,
         "httpBind": "127.0.0.1",
-        "httpPort": 8085,
+        "httpPort": 18085,
+        "httpsBind": "127.0.0.1",
+        "httpsPort": 18443,
+        "mailpitPort": 18025,
         "adminUser": "admin",
         "integration": {
             "uid": "provider-client",
@@ -89,9 +93,13 @@ def secret_file(value, config_path):
 
 def load_config(path):
     config = read_json(path)
-    expected = set(default_config())
-    if not isinstance(config, dict) or set(config) != expected:
+    defaults = default_config()
+    expected = set(defaults)
+    optional = {"httpsBind", "httpsPort", "mailpitPort"}
+    if not isinstance(config, dict) or set(config) - expected or expected - optional - set(config):
         raise SetupError("Config keys must match deploy/config.example.json; regenerate with init.")
+    for key in optional:
+        config.setdefault(key, defaults[key])
     if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,62}", config["projectName"]):
         raise SetupError("Invalid projectName.")
     public = urlsplit(config["publicUrl"])
@@ -106,12 +114,19 @@ def load_config(path):
     config["publicUrl"] = config["publicUrl"].rstrip("/")
     if type(config["publishHttp"]) is not bool or (public.scheme == "http" and not config["publishHttp"]):
         raise SetupError("HTTP publicUrl requires publishHttp=true.")
-    try:
-        ipaddress.IPv4Address(config["httpBind"])
-    except ValueError as error:
-        raise SetupError("httpBind must be an IPv4 bind address.") from error
-    if type(config["httpPort"]) is not int or not 1 <= config["httpPort"] <= 65535:
-        raise SetupError("httpPort must be between 1 and 65535.")
+    for key in ("httpBind", "httpsBind"):
+        try:
+            ipaddress.IPv4Address(config[key])
+        except (ValueError, TypeError) as error:
+            raise SetupError(f"{key} must be an IPv4 bind address.") from error
+    for key in ("httpPort", "httpsPort", "mailpitPort"):
+        if type(config[key]) is not int or not 1 <= config[key] <= 65535:
+            raise SetupError(f"{key} must be between 1 and 65535.")
+    bindings = published_ports(config)
+    for index, first in enumerate(bindings):
+        for second in bindings[index + 1:]:
+            if first["port"] == second["port"] and addresses_overlap(first["host"], second["host"]):
+                raise SetupError(f"Conflicting host port {first['port']}: {first['setting']} and {second['setting']}.")
     integration = config["integration"]
     if not isinstance(integration, dict) or not set(integration) <= {"uid", "policy", "passwordFile", "appPasswordFile"}:
         raise SetupError("Invalid integration configuration.")
@@ -175,6 +190,20 @@ def load_config(path):
         if smtp["auth"] and (not smtp["username"] or not smtp["passwordFile"]):
             raise SetupError("SMTP authentication requires username and passwordFile.")
     return config
+
+
+def addresses_overlap(first, second):
+    return first == second or first in ("", "0.0.0.0", "::") or second in ("", "0.0.0.0", "::")
+
+
+def published_ports(config):
+    bindings = [
+        {"service": "nginx", "host": config["httpsBind"], "port": config["httpsPort"], "target": 443, "setting": "httpsPort"},
+        {"service": "mailpit", "host": "127.0.0.1", "port": config["mailpitPort"], "target": 8025, "setting": "mailpitPort"},
+    ]
+    if config["publishHttp"]:
+        bindings.append({"service": "nginx", "host": config["httpBind"], "port": config["httpPort"], "target": 80, "setting": "httpPort"})
+    return bindings
 
 
 def run(args, *, data=None, capture=False, sensitive=False, env=None):
@@ -249,7 +278,10 @@ class Installer:
         for tool in ("docker", "git", "setfacl"):
             if shutil.which(tool) is None:
                 raise SetupError(f"Missing {tool}; on Ubuntu use install --install-deps.")
-        run(["docker", "compose", "version"], capture=True)
+        version = run(["docker", "compose", "version", "--short"], capture=True).strip()
+        parts = re.match(r"v?(\d+)\.(\d+)\.(\d+)", version)
+        if not parts or tuple(map(int, parts.groups())) < (2, 24, 4):
+            raise SetupError("Docker Compose 2.24.4 or newer is required; update the Compose plugin before installation.")
         run(["docker", "info"], capture=True, sensitive=True)
         if disk:
             # Source, runtime data and Docker images can live on separate disks.
@@ -261,6 +293,37 @@ class Installer:
             for path in (self.source, runtime_parent, Path(docker_root)):
                 if path.exists() and shutil.disk_usage(path).free < 6 * 1024**3:
                     raise SetupError(f"Less than 6 GiB free at {path}; provide more disk space before installation.")
+
+    def docker_bindings(self):
+        """Inspect only published ports and ownership labels, never container secrets."""
+        identifiers = run(["docker", "ps", "-q"], capture=True).split()
+        if not identifiers:
+            return []
+        template = '{{json .NetworkSettings.Ports}}\t{{index .Config.Labels "com.docker.compose.project"}}\t{{index .Config.Labels "com.docker.compose.service"}}'
+        output = run(["docker", "inspect", "--format", template, *identifiers], capture=True, sensitive=True)
+        bindings = []
+        for line in output.splitlines():
+            ports, project, service = line.split("\t")
+            for target, entries in (json.loads(ports) or {}).items():
+                if target.endswith("/tcp"):
+                    for entry in entries or []:
+                        bindings.append({"host": entry["HostIp"], "port": int(entry["HostPort"]), "project": project, "service": service})
+        return bindings
+
+    def check_ports(self):
+        """Reject conflicts before starting containers; allow this project's own bindings on rerun."""
+        existing = self.docker_bindings()
+        for wanted in published_ports(self.config):
+            owners = [entry for entry in existing if entry["port"] == wanted["port"] and addresses_overlap(entry["host"], wanted["host"])]
+            if any(entry["project"] != self.config["projectName"] or entry["service"] != wanted["service"] for entry in owners):
+                raise SetupError(f"Host port {wanted['host']}:{wanted['port']} is already published by another Docker service; change {wanted['setting']} in install.json.")
+            if owners:
+                continue
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+                    probe.bind((wanted["host"], wanted["port"]))
+            except OSError as error:
+                raise SetupError(f"Cannot bind {wanted['host']}:{wanted['port']}; the port is occupied or the bind address is unavailable. Change {wanted['setting']} in install.json.") from error
 
     def prepare(self):
         config = self.config
@@ -298,7 +361,8 @@ class Installer:
             "DB_HOST": "sqlite", "DB_SERVICE_TYPE": "mysql", "VERSION_NEXTCLOUD": NEXTCLOUD_REVISION,
             "NEXTCLOUD_HOST": public.hostname, "SOURCE_PUBLIC_HOST": public.netloc, "SOURCE_PROTOCOL": public.scheme,
             "NEXTCLOUD_PROTOCOL": public.scheme, "NEXTCLOUD_ADMIN_USER": admin["uid"], "NEXTCLOUD_ADMIN_PASSWORD": admin["password"],
-            "DEFAULT_PHONE_REGION": "VN", "PROXY_IP_BIND": "127.0.0.1", "DEPLOY_HTTP_BIND": config["httpBind"], "DEPLOY_HTTP_PORT": str(config["httpPort"]),
+            "DEFAULT_PHONE_REGION": "VN", "DEPLOY_HTTP_BIND": config["httpBind"], "DEPLOY_HTTP_PORT": str(config["httpPort"]),
+            "DEPLOY_HTTPS_BIND": config["httpsBind"], "DEPLOY_HTTPS_PORT": str(config["httpsPort"]), "DEPLOY_MAILPIT_PORT": str(config["mailpitPort"]),
         }
         # Compose supports literal single-quoted values, including escaped single quotes.
         encoded = "".join(key + "='" + value.replace("'", "\\'") + "'\n" for key, value in values.items())
@@ -407,6 +471,7 @@ class Installer:
                 secret_file(integration[setting], self.config_path)
         print("[1/7] Preparing pinned runtime and preserving credentials.", flush=True)
         self.prepare()
+        self.check_ports()
         config_file = self.runtime / "volumes/nextcloud/config/config.php"
         if not config_file.exists():
             print("[2/7] Initializing Nextcloud before attaching app source.", flush=True)
@@ -540,7 +605,8 @@ def main(argv=None):
                                                  if k in installer.config["integration"]["policy"]},
                           "existingPolicy": "merge explicit keys" if args.update_client else "preserve; use --update-client to apply policy edits",
                           "smsApp": "try install/enable; provider setup deferred" if args.install_sms_app or installer.config["integration"]["policy"].get("otpChannel") in ("sms", "email_sms") else "optional; not requested",
-                          "steps": ["check host dependencies/disk", "prepare pinned NCDD/Nextcloud", "build source", "enable/migrate/install tools and CA", "provision account/App Password", "start cron", "HTTP checks"],
+                          "portsToPublish": published_ports(installer.config),
+                          "steps": ["check host dependencies/disk", "prepare pinned NCDD/Nextcloud", "check configured host ports", "build source", "enable/migrate/install tools and CA", "provision account/App Password", "start cron", "HTTP checks"],
                           "smtp": "preserve existing; new runtime uses Mailpit" if installer.config["smtp"] is None else "apply explicit SMTP configuration"}, indent=2))
         return 0
     if args.command == "runtime":
@@ -552,8 +618,12 @@ def main(argv=None):
         elif command == "exec":
             installer.compose("exec", "-T", "--user", "www-data", "nextcloud", *remaining)
         elif command == "up":
+            installer.check_ports()
             installer.compose("up", "-d", *remaining, *SERVICES, "cron")
-        elif command in ("ps", "logs", "config", "stop", "start", "restart"):
+        elif command in ("start", "restart"):
+            installer.check_ports()
+            installer.compose(command, *remaining)
+        elif command in ("ps", "logs", "config", "stop"):
             installer.compose(command, *remaining)
         else:
             raise SetupError("Unsupported runtime command; data removal is intentionally not part of this helper.")

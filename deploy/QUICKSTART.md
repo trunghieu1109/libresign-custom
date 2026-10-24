@@ -11,6 +11,8 @@ Phía tích hợp gọi API từ **backend của mình** bằng tài khoản má
 
 Thông tin bàn giao ngày **24/10/2026**, dành cho dữ liệu thử. Khi chuyển sang máy/môi trường khác, nhận lại cấu hình tương ứng từ bên vận hành.
 
+Địa chỉ dưới đây thuộc máy thử đang hoạt động. Bộ cài mới dùng host HTTP `18085`, HTTPS local `18443` và Mailpit local `18025`; việc đổi mặc định bộ cài không đổi địa chỉ `19841 → 8085` của máy thử hiện tại. Xem [bảng cổng bộ cài](README.md#cổng-của-bộ-cài-mới) khi dựng server mới.
+
 | Thông tin | Giá trị |
 |---|---|
 | Địa chỉ server | `http://76.71.171.67:19841` |

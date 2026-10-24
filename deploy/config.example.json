@@ -1,9 +1,12 @@
 {
   "projectName": "libresign-custom",
-  "publicUrl": "https://libresign-custom.localhost",
+  "publicUrl": "https://localhost:18443",
   "publishHttp": false,
   "httpBind": "127.0.0.1",
-  "httpPort": 8085,
+  "httpPort": 18085,
+  "httpsBind": "127.0.0.1",
+  "httpsPort": 18443,
+  "mailpitPort": 18025,
   "adminUser": "admin",
   "integration": {
     "uid": "provider-client",

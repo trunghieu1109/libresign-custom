@@ -36,6 +36,9 @@ class InstallerTests(unittest.TestCase):
         self.provisions = []
         self.app_password = "APP-PASSWORD-MUST-NOT-APPEAR-IN-LOGS"
         self.sms_installed = False
+        probe = patch.object(setup.socket, "socket")
+        self.socket_factory = probe.start()
+        self.addCleanup(probe.stop)
 
     def installer(self):
         return setup.Installer(self.runtime, self.config_path, self.source)
@@ -329,7 +332,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_disk_failure_prevents_prepare(self):
         installer = self.installer()
-        with patch.object(setup.shutil, "which", return_value="/bin/tool"), patch.object(setup.shutil, "disk_usage", return_value=type("Disk", (), {"free": 1024})()), patch.object(setup, "run", return_value="/tmp"):
+        with patch.object(setup.shutil, "which", return_value="/bin/tool"), patch.object(setup.shutil, "disk_usage", return_value=type("Disk", (), {"free": 1024})()), patch.object(setup, "run", side_effect=self.preflight_run):
             with self.assertRaisesRegex(setup.SetupError, "6 GiB"):
                 installer.preflight()
         self.assertFalse(self.runtime.exists())
@@ -341,7 +344,7 @@ class InstallerTests(unittest.TestCase):
             return type("Disk", (), {"free": free})()
         with patch.object(setup.shutil, "which", return_value="/bin/tool"), \
                 patch.object(setup.shutil, "disk_usage", side_effect=disk_usage), \
-                patch.object(setup, "run", return_value="/tmp"):
+                patch.object(setup, "run", side_effect=self.preflight_run):
             with self.assertRaisesRegex(setup.SetupError, "6 GiB"):
                 installer.preflight()
         self.assertFalse(self.runtime.exists())
@@ -350,7 +353,8 @@ class InstallerTests(unittest.TestCase):
         self.install()
         overrides = {"SOURCE_RUNTIME_DIR": "/wrong-runtime", "LIBRESIGN_SOURCE_PATH": "/wrong-source",
                      "NEXTCLOUD_ADMIN_PASSWORD": "wrong-password", "SOURCE_PUBLIC_HOST": "wrong.example",
-                     "HOST_UID": "1001", "DEPLOY_HTTP_PORT": "9999", "DEPLOY_TEST_KEEP": "preserved"}
+                     "HOST_UID": "1001", "DEPLOY_HTTP_PORT": "9999", "DEPLOY_HTTPS_PORT": "9998",
+                     "DEPLOY_MAILPIT_PORT": "9997", "DEPLOY_TEST_KEEP": "preserved"}
         with patch.dict(os.environ, overrides), patch.object(setup, "run", return_value="") as runner:
             self.installer().compose("config", "--quiet")
         environment = runner.call_args.kwargs.get("env")
@@ -358,6 +362,92 @@ class InstallerTests(unittest.TestCase):
         for key in overrides.keys() - {"DEPLOY_TEST_KEEP"}:
             self.assertTrue(key not in environment, f"Exported {key} overrides the saved runtime.")
         self.assertEqual("preserved", environment["DEPLOY_TEST_KEEP"])
+
+    def preflight_run(self, args, **kwargs):
+        return "2.24.4" if list(args[:3]) == ["docker", "compose", "version"] else "/tmp"
+
+    def test_old_compose_is_rejected_before_runtime_mutations(self):
+        with patch.object(setup.shutil, "which", return_value="/bin/tool"), patch.object(setup, "run", return_value="2.24.3"):
+            with self.assertRaisesRegex(setup.SetupError, "2.24.4"):
+                self.installer().preflight(disk=False)
+        self.assertFalse(self.runtime.exists())
+
+    def test_default_host_ports_are_separate_and_http_is_optional(self):
+        bindings = setup.published_ports(self.config)
+        self.assertEqual({18443, 18025}, {item["port"] for item in bindings})
+        self.assertTrue(all(item["host"] == "127.0.0.1" for item in bindings))
+        self.config["publishHttp"] = True
+        bindings = setup.published_ports(self.config)
+        self.assertEqual({18443, 18025, 18085}, {item["port"] for item in bindings})
+        self.assertNotIn("proxy-coordinator", setup.SERVICES)
+
+    def test_old_configuration_keeps_explicit_http_port_and_adds_new_defaults(self):
+        for key in ["httpsBind", "httpsPort", "mailpitPort"]:
+            self.config.pop(key)
+        self.config["httpPort"] = 8085
+        setup.private_json(self.config_path, self.config)
+        config = self.installer().config
+        self.assertEqual(8085, config["httpPort"])
+        self.assertEqual(18443, config["httpsPort"])
+        self.assertEqual(18025, config["mailpitPort"])
+
+    def test_overlapping_host_ports_in_configuration_are_rejected(self):
+        self.config.update(publishHttp=True, httpBind="0.0.0.0", httpPort=18443)
+        setup.private_json(self.config_path, self.config)
+        with self.assertRaisesRegex(setup.SetupError, "Conflicting host port"):
+            self.installer()
+        self.config.update(publishHttp=False, mailpitPort=18443)
+        setup.private_json(self.config_path, self.config)
+        with self.assertRaisesRegex(setup.SetupError, "Conflicting host port"):
+            self.installer()
+
+    def test_invalid_new_bindings_are_rejected(self):
+        for key, value in [("httpsPort", 0), ("mailpitPort", 65536), ("httpsPort", True), ("httpsBind", "not-an-ip")]:
+            with self.subTest(key=key):
+                config = dict(self.config)
+                config[key] = value
+                setup.private_json(self.config_path, config)
+                with self.assertRaises(setup.SetupError):
+                    self.installer()
+
+    def test_non_docker_port_conflict_prevents_container_start(self):
+        self.socket_factory.return_value.__enter__.return_value.bind.side_effect = OSError("Address already in use")
+        with self.assertRaisesRegex(setup.SetupError, "httpsPort"):
+            self.install()
+        self.assertFalse(any("up" in args or "stop" in args for args, _ in self.calls))
+        self.assertFalse((self.runtime / "installed.json").exists())
+
+    def test_docker_port_conflict_is_detected_even_without_a_host_listener(self):
+        installer = self.installer()
+        bindings = [{"host": "0.0.0.0", "port": 18443, "project": "another-project", "service": "nginx"}]
+        with patch.object(installer, "docker_bindings", return_value=bindings):
+            with self.assertRaisesRegex(setup.SetupError, "another Docker service"):
+                installer.check_ports()
+        self.socket_factory.assert_not_called()
+
+    def test_port_owned_by_same_runtime_is_allowed_on_rerun(self):
+        installer = self.installer()
+        bindings = [{"host": "127.0.0.1", "port": 18443, "project": self.config["projectName"], "service": "nginx"}]
+        with patch.object(installer, "docker_bindings", return_value=bindings):
+            installer.check_ports()
+        calls = self.socket_factory.return_value.__enter__.return_value.bind.call_args_list
+        self.assertEqual([(("127.0.0.1", 18025),)], [call.args for call in calls])
+
+    def test_non_overlapping_docker_bindings_do_not_block_installation(self):
+        installer = self.installer()
+        bindings = [{"host": "127.0.0.2", "port": 18443, "project": "another-project", "service": "nginx"},
+                    {"host": "0.0.0.0", "port": 8085, "project": "another-project", "service": "nginx"}]
+        with patch.object(installer, "docker_bindings", return_value=bindings):
+            installer.check_ports()
+        self.assertEqual(2, self.socket_factory.return_value.__enter__.return_value.bind.call_count)
+
+    def test_docker_bindings_parse_only_published_tcp_ports(self):
+        ports = {"443/tcp": [{"HostIp": "0.0.0.0", "HostPort": "18443"}],
+                 "9000/tcp": None, "53/udp": [{"HostIp": "0.0.0.0", "HostPort": "53"}]}
+        output = json.dumps(ports) + "\tother-project\tnginx\n"
+        with patch.object(setup, "run", side_effect=["container-id\n", output]):
+            bindings = self.installer().docker_bindings()
+        self.assertEqual([{"host": "0.0.0.0", "port": 18443, "project": "other-project", "service": "nginx"}], bindings)
 
 
 if __name__ == "__main__":

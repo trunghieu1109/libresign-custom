@@ -10,7 +10,7 @@ Ngày kiểm tra: **24/10/2026**. Phạm vi là bộ cài của fork LibreSign 1
 | Kiểm tra | Kết quả |
 |---|---|
 | Bash syntax của entrypoint, runtime helper, host dependencies và wrapper ngoài repo | Đạt |
-| Python orchestration regression | **30 tests đạt**: các trường hợp cài mới/chạy lại, secret/identity, OTP email/SMS/hai kênh, mock, app SMS tùy chọn, dung lượng nơi lưu runtime và biến host trùng cấu hình Compose |
+| Python orchestration regression | **40 tests đạt**: các trường hợp cài mới/chạy lại, secret/identity, OTP email/SMS/hai kênh, mock, app SMS tùy chọn, dung lượng runtime, biến host và xung đột cổng |
 | PHP syntax và tương thích với Nextcloud đang dùng | Đạt |
 | PHP provisioning trên SQLite snapshot/CA/datadir riêng | **54 assertions đạt**, không ghi vào database hoặc CA đang phục vụ người dùng |
 | Compose render bằng Docker Compose thật | Đạt cho HTTPS local và HTTP overlay; kiểm tra mounts, UID cron và literal `$`/quote/space trong cấu hình thử |
@@ -38,6 +38,14 @@ Doctor đã thực hiện request qua nginx/PHP-FPM với App Password: `/capabi
 - Pin thêm image nginx và Redis bằng digest của image đã có trên máy, giữ phiên bản đang dùng. Render bằng Docker Compose thật đạt cho HTTPS local và HTTP IP:port, kể cả khi host export sai đường dẫn source/runtime, UID, cổng, hostname và mật khẩu bootstrap. Đối chiếu mount, credential, cron user, cổng publish và image digest; không tạo container hoặc in secret trong bước render.
 - PHP helper qua kiểm tra cú pháp. Helper kiểm tra CA/tools, bảng/job và ba API danh mục qua nginx nội bộ bằng credential hiện có đều đạt; anonymous bị từ chối. Policy đang dùng vẫn là email + mock OTP; không thay CA, tài khoản hoặc policy của máy hiện tại. OpenAPI public vẫn khớp controller/Postman, đủ 24 thao tác.
 - Lượt rà soát này không chạy lại toàn bộ cài sạch hoặc cài package host. Kết quả cài sạch/54 assertions PHP ở trên thuộc các lượt kiểm chứng trước; giới hạn Ubuntu trắng và đường mạng/HTTPS công khai vẫn giữ nguyên.
+
+## Lượt tách cổng của bộ cài mới
+
+- Chuyển mặc định host sang HTTP `18085` (khi bật), HTTPS `127.0.0.1:18443` và Mailpit UI `127.0.0.1:18025`. Bỏ dependency nginx vào shared proxy/coordinator; service SQL kế thừa bị tắt profile và xóa dải cổng publish vì fork dùng SQLite. Không sửa NCDD đã pin hoặc các container đang phục vụ máy thử.
+- **40 tests Python đạt**, gồm kiểm tra cổng trùng trong JSON, mapping Docker của project khác, listener ngoài Docker, mapping của chính runtime khi chạy lại, địa chỉ bind không chồng lấn, parse TCP/UDP và cấu hình cũ. Bash syntax và OpenAPI public check đạt.
+- Render bằng Docker Compose thật cho HTTPS local và HTTP IP:port đạt: chỉ publish các cổng mong đợi, dependency nginx chỉ còn Nextcloud, không có dải cổng SQL, biến host không ghi đè cấu hình. Bộ cài kiểm tra Compose ≥2.24.4 để dùng `!override`.
+- Khởi động project fixture riêng với các image đã pin: PHP-FPM phục vụ `status.php` tổng hợp, nginx trả HTTP qua `18085`, HTTPS qua `18443` kiểm chứng certificate/SAN `localhost`, Mailpit UI trả 200 qua `18025`. Tất cả cổng fixture bind loopback. Kiểm tra thật xác nhận chạy lại cho phép mapping của chính project; project khác và TCP listener ngoài Docker bị từ chối.
+- Fixture không chạy Nextcloud bootstrap hay dùng database/CA thật. Các container/network fixture đã được dọn. Không thay mapping `19841 → 8085`, credential hoặc policy của runtime hiện tại. Đây là kiểm chứng topology/cổng, không phải lượt cài sạch end-to-end mới.
 
 ## Giới hạn
 

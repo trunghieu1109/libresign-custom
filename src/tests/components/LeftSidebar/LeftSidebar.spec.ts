@@ -79,7 +79,8 @@ describe('LeftSidebar', () => {
 		})
 
 		const icons = wrapper.findAll('.menu-icon')
-		expect(icons).toHaveLength(4)
+		expect(icons).toHaveLength(5)
+		expect(wrapper.find('#provider-management').exists()).toBe(true)
 		for (const icon of icons) {
 			expect(icon.attributes('data-path')).toBeTruthy()
 		}

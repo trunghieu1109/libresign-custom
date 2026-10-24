@@ -16,7 +16,9 @@ set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y ca-certificates curl git python3 acl
-if ! command -v docker >/dev/null || ! docker compose version >/dev/null 2>&1; then
+deploy_compose_version="$(docker compose version --short 2>/dev/null || true)"
+if ! command -v docker >/dev/null || [[ -z "$deploy_compose_version" ]] \
+  || ! dpkg --compare-versions "${deploy_compose_version#v}" ge 2.24.4; then
   # Do not remove a pre-existing container engine or its packages automatically.
   for package in docker.io docker-compose docker-compose-v2 docker-doc docker-buildx podman-docker containerd runc; do
     if [[ "$(dpkg-query -W -f='${Status}' "$package" 2>/dev/null || true)" == 'install ok installed' ]]; then

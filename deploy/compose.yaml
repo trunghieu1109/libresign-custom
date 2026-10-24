@@ -2,6 +2,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Overlay on the pinned NCDD topology. Its database is SQLite for this fork.
 services:
+  # This fork uses SQLite; do not start/publish the upstream SQL service.
+  database:
+    profiles: ["unused-database"]
+    ports: !override []
   nextcloud:
     image: ${SOURCE_PHP_IMAGE:?Missing runtime .env}
     environment:
@@ -15,6 +19,24 @@ services:
     image: redis:7-alpine@sha256:57e4255cc971b1c8d6f8a6ca283ac01bc3ecdd914273ef6bfaede87aaecd6541
   nginx:
     image: ghcr.io/librecodecoop/nextcloud-dev-nginx@sha256:ecd9dc482b6c436e1757fd03c2e632dd32e5feee98678bf7a67bbe02e7f21b4b
+    environment:
+      VIRTUAL_HOST: ""
+      SELF_SIGNED_HOST: ""
+    depends_on: !override
+      nextcloud:
+        condition: service_started
+    ports:
+      - "${DEPLOY_HTTPS_BIND}:${DEPLOY_HTTPS_PORT}:443"
+  mailpit:
+    environment:
+      VIRTUAL_HOST: ""
+      SELF_SIGNED_HOST: ""
+    ports:
+      - "127.0.0.1:${DEPLOY_MAILPIT_PORT}:8025"
+  # The upstream coordinator creates a shared proxy on fixed host ports 80/443.
+  # Standalone deployments publish nginx directly and leave this profile inactive.
+  proxy-coordinator:
+    profiles: ["unused-shared-proxy"]
   cron:
     image: ${SOURCE_PHP_IMAGE}
     user: www-data

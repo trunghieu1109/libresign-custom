@@ -290,7 +290,7 @@ Các luồng chính trong collection:
 | Lô có file thành công/lỗi | 19 → lấy OTP lô → 20 → 21 |
 | Cấp lại, QR, assertion | Các nhánh R, Q, E, A; theo trạng thái và điều kiện thực tế |
 
-Không chạy thẳng toàn collection bằng Runner: có bước nhập OTP/assertion và các nhánh có điều kiện/thu hồi. Mã cấp, mã ký đơn và mã ký lô là các biến khác nhau. Khi vận hành đã bật mock OTP, có thể điền `123456` vào các biến OTP đó, giữ nguyên tên trường/body và thứ tự gọi. Khi mock tắt, email trong Mailpit của bản thử có thể mở qua shared proxy `https://TEN_PROJECT-mailpit.localhost`, hoặc cùng cổng local 8443 nếu dùng tunnel. Với SMTP thật, lấy mã tại hộp thư người nhận; với SMS, lấy mã từ điện thoại. Đổi biến Postman không đổi kênh OTP trên server.
+Không chạy thẳng toàn collection bằng Runner: có bước nhập OTP/assertion và các nhánh có điều kiện/thu hồi. Mã cấp, mã ký đơn và mã ký lô là các biến khác nhau. Khi vận hành đã bật mock OTP, có thể điền `123456` vào các biến OTP đó, giữ nguyên tên trường/body và thứ tự gọi. Khi mock tắt, nhận cách lấy thư thử từ vận hành. Bộ cài mới publish Mailpit ở `http://127.0.0.1:18025` trên máy Docker, có thể mở qua [SSH tunnel](README.md#2-cài-với-cấu-hình-riêng--nên-dùng-trên-vps); runtime cũ có thể dùng địa chỉ khác. Với SMTP thật, lấy mã tại hộp thư người nhận; với SMS, lấy mã từ điện thoại. Đổi biến Postman không đổi kênh OTP trên server.
 
 Tiêu chí nghiệm thu: credential đúng/sai; thiếu scope; tenant khác; tạo/cấp/tra cứu thật; retry cùng khóa không cấp/ký trùng; OTP sai/hết hạn/gửi lại; ký PDF hợp lệ và kiểm tra chữ ký; lô lỗi từng phần; polling/callback trùng; thu hồi; quyền sở hữu; khôi phục sau gián đoạn. Đồng bộ giờ máy qua NTP để timestamp/OTP/challenge không lệch.
 

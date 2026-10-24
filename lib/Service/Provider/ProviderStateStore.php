@@ -129,6 +129,23 @@ class ProviderStateStore {
 		return array_map($this->decode(...), $qb->executeQuery()->fetchAll());
 	}
 
+	/** Paginated workflow records; always constrain both tenant and workflow kind. */
+	public function listing(string $uid, string $kind, int $page, int $size): array {
+		if (!in_array($kind, ['enrollment', 'signing'], true) || $page < 1 || $size < 1 || $size > 100) {
+			throw new ProviderException('invalid_pagination', 'Invalid workflow kind or pagination.');
+		}
+		$qb = $this->db->getQueryBuilder();
+		$qb->from('libresign_provider_state')
+			->where($qb->expr()->eq('client_uid', $qb->createNamedParameter($uid)))
+			->andWhere($qb->expr()->eq('kind', $qb->createNamedParameter($kind)));
+		$count = clone $qb;
+		$count->select($count->func()->count('*'));
+		$total = (int)$count->executeQuery()->fetchOne();
+		$qb->select('*')->orderBy('created_at', 'DESC')->addOrderBy('record_id', 'DESC')
+			->setFirstResult(($page - 1) * $size)->setMaxResults($size);
+		return ['items' => array_map($this->decode(...), $qb->executeQuery()->fetchAll()), 'totalItem' => $total];
+	}
+
 	private function decode(array $row): array {
 		foreach (['created_at', 'updated_at', 'expires_at', 'version'] as $key) {
 			$row[$key] = (int)$row[$key];

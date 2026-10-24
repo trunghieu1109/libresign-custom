@@ -28,7 +28,7 @@ sudo bash deploy/install.sh install --install-deps
 
 Script tự chọn tên Compose project theo đường dẫn source. Cuối quá trình, nó in URL và **đường dẫn** lấy tài khoản, không in mật khẩu. Runtime mặc định là thư mục `.libresign-runtime-<mã>` bên cạnh source; đây là thư mục ngoài application/web root.
 
-Trên máy đã có dependencies và quyền Docker, bỏ `--install-deps` và có thể chạy bằng user thường. Cài package tự động chỉ hỗ trợ Ubuntu. Các hệ khác cần cài Docker Compose v2, Git, Python 3.10+, `acl` và curl trước.
+Trên máy đã có dependencies và quyền Docker, bỏ `--install-deps` và có thể chạy bằng user thường. Cài package tự động chỉ hỗ trợ Ubuntu. Các hệ khác cần cài Docker Compose **2.24.4+**, Git, Python 3.10+, `acl` và curl trước. Bộ cài cần cú pháp thay thế dependency/cổng trong Compose để bỏ proxy dùng chung của NCDD, xem [quy tắc `!override`](https://docs.docker.com/reference/compose-file/merge/#replace-value).
 
 Nếu phát hiện package Docker xung đột, script dừng để bạn xử lý theo tài liệu Docker; nó không tự gỡ engine, xóa container hay prune volume. Nếu Docker daemon chưa chạy trong WSL/Docker Desktop, bật Docker rồi chạy lại.
 
@@ -49,32 +49,50 @@ Chọn URL **trước khi tạo CA/cấp chứng thư**. Ba cách truy cập:
 
 | Cách dùng | Giá trị cấu hình | Truy cập |
 |---|---|---|
-| Local | Giữ `publicUrl` HTTPS `.localhost`, `publishHttp=false` | Mở URL được in ra trên máy Docker |
-| VPS qua SSH tunnel | `publicUrl=https://TEN_PROJECT.localhost:8443`, `publishHttp=false` | Tunnel local 8443 tới loopback 443 của VPS |
+| Local | Giữ `publicUrl=https://localhost:18443`, `publishHttp=false` | HTTPS trực tiếp của nginx, bind loopback 18443 |
+| VPS qua SSH tunnel | Giữ `publicUrl=https://localhost:18443`, `publishHttp=false` | Tunnel local 18443 tới loopback 18443 của VPS |
 | HTTP/NAT cho dữ liệu thử | `publicUrl=http://IP_CONG_KHAI:CONG_CONG_KHAI`, `publishHttp=true`, đặt `httpBind`/`httpPort` | Provider chuyển cổng công khai tới `httpPort` trên host |
 
 Với tunnel, thay user/IP/cổng SSH của máy mới:
 
 ```bash
-ssh -N -L 127.0.0.1:8443:127.0.0.1:443 USER@IP_VPS
+ssh -N \
+  -L 127.0.0.1:18443:127.0.0.1:18443 \
+  -L 127.0.0.1:18025:127.0.0.1:18025 USER@IP_VPS
 ```
 
-Hostname `.localhost` phải phân giải về `127.0.0.1` trên máy mở trình duyệt. Nếu cần, thêm vào hosts. HTTPS local/tunnel dùng chứng thư tự ký của proxy phát triển; cần tin cậy chứng thư này để kiểm tra TLS đầy đủ. CA HTTPS và CA ký PDF là hai CA riêng.
+Mở `https://localhost:18443` cho LibreSign và `http://127.0.0.1:18025` cho Mailpit. HTTPS local/tunnel dùng chứng thư tự ký của nginx với SAN `localhost`; cần tin cậy chứng thư này để kiểm tra TLS đầy đủ. CA HTTPS và CA ký PDF là hai CA riêng. Domain/HTTPS công khai được cấu hình ở reverse proxy riêng khi triển khai sau này.
 
-Ví dụ NAT: nhà cung cấp ánh xạ `IP:19841 → host:8085`:
+Ví dụ NAT trên máy mới: nhà cung cấp ánh xạ `IP:19841 → host:18085`:
 
 ```json
 "publicUrl": "http://IP_CUA_MAY_MOI:19841",
 "publishHttp": true,
 "httpBind": "0.0.0.0",
-"httpPort": 8085
+"httpPort": 18085
 ```
 
-Sửa các field tương ứng trong file JSON đầy đủ, không thay cả file bằng đoạn rời trên. Chỉ public HTTP khi dùng dữ liệu thử. Script không tự sửa DNS, firewall hoặc bảng NAT. NCDD dùng proxy phát triển trên loopback 80/443; các cổng này cần sẵn sàng hoặc đã thuộc shared proxy NCDD. Một dịch vụ khác chiếm cổng HTTP đã chọn sẽ làm bước `up` thất bại.
+Sửa các field tương ứng trong file JSON đầy đủ, không thay cả file bằng đoạn rời trên. Với VPS truy cập trực tiếp, dùng `publicUrl=http://IP_CUA_MAY_MOI:18085`, không cần NAT. Chỉ public HTTP khi dùng dữ liệu thử. Script không tự sửa DNS, firewall hoặc bảng NAT.
+
+### Cổng của bộ cài mới
+
+| Dịch vụ | Host mặc định | Cổng trong container |
+|---|---|---|
+| LibreSign HTTP | `127.0.0.1:18085`, chỉ khi `publishHttp=true`; dùng `httpBind=0.0.0.0` khi cần truy cập ngoài | nginx `80` |
+| LibreSign HTTPS local | `127.0.0.1:18443`; chỉnh `httpsBind`/`httpsPort` khi cần | nginx `443` |
+| Giao diện Mailpit | `127.0.0.1:18025`; chỉnh `mailpitPort` khi cần | `8025` |
+| SMTP Mailpit, Redis, PHP-FPM | Chỉ trong mạng Docker, không publish ra host | `1025`, `6379`, `9000` |
+| Database | SQLite trong runtime; không chạy service SQL của NCDD | Không có cổng database |
+
+Bộ cài mới không khởi động proxy/coordinator dùng chung, không chiếm host 80/443 và không publish Redis/SMTP/PHP-FPM. Cổng nội bộ container giữ nguyên vì các Compose project có mạng riêng. Nếu chạy nhiều bản trên một máy, đặt các cổng host khác nhau cho từng runtime.
+
+Trước khi khởi động, bộ cài kiểm tra mapping Docker và thử bind các cổng cần dùng. Cổng bị chiếm hoặc địa chỉ bind không tồn tại sẽ có lỗi chỉ rõ field cần sửa trong `install.json`; script không tự chọn cổng khác. Chạy lại cho phép mapping thuộc đúng project/service hiện có. Kiểm tra cổng là trạng thái tại thời điểm kiểm tra; Docker vẫn có thể báo xung đột nếu dịch vụ khác chiếm cổng ngay sau đó.
+
+Với `install.json` cũ, `httpPort` đã khai báo vẫn được giữ, kể cả `8085`; các key mới thiếu được bổ sung mặc định trong bộ nhớ. Muốn chuyển sang dải mới, sửa `httpPort=18085`, URL và NAT tương ứng rồi chạy lại `install`. Nếu trước đây mở HTTPS qua shared proxy, đổi `publicUrl`/tunnel sang `https://localhost:18443`. Script không dừng proxy dùng chung đang phục vụ hệ thống khác.
 
 ## 3. Bộ cài thực hiện những gì?
 
-1. Kiểm tra Docker/Compose, source đúng nhánh Nextcloud 36, Git submodule và dung lượng trống ít nhất 6 GiB tại source, nơi lưu runtime và Docker data root đọc được. Khi runtime chưa tồn tại, kiểm tra thư mục cha gần nhất đã có. Nên chuẩn bị nhiều dung lượng hơn cho image, npm và PDF; 6 GiB là ngưỡng chặn, không phải sizing production.
+1. Kiểm tra Docker/Compose 2.24.4+, source đúng nhánh Nextcloud 36, Git submodule, cổng publish và dung lượng trống ít nhất 6 GiB tại source, nơi lưu runtime và Docker data root đọc được. Khi runtime chưa tồn tại, kiểm tra thư mục cha gần nhất đã có. Nên chuẩn bị nhiều dung lượng hơn cho image, npm và PDF; 6 GiB là ngưỡng chặn, không phải sizing production.
 2. Lấy NCDD và Nextcloud đúng revision đã pin, dùng các image PHP/nginx/Redis đã pin digest; khởi tạo Nextcloud trước khi mount source để startup không đổi ownership file code.
 3. Tạo mật khẩu admin ngẫu nhiên; cấp ACL cho UID 33 ở thư mục build, không recursively chown source.
 4. Cài PHP runtime dependencies từ `composer.lock`; `npm ci` từ lockfile rồi build frontend. Không cài bộ test PHP trong bước này.
@@ -83,7 +101,7 @@ Sửa các field tương ứng trong file JSON đầy đủ, không thay cả fi
 7. Áp dụng SMTP nếu cấu hình; tùy chọn cài/bật app Two-Factor Gateway khi cần SMS, để cấu hình provider làm sau; tạo cron service gọi `cron.php` mỗi 60 giây, bằng `www-data`.
 8. Kiểm tra CA/tools, bảng provider, đăng ký background job, cron đang chạy; gọi ba API danh mục qua nginx/PHP-FPM bằng App Password, đối chiếu kênh OTP/các kênh được backend hỗ trợ và xác nhận anonymous bị từ chối. In kênh OTP/chế độ mock đang thực sự áp dụng.
 
-Redis và Mailpit thuộc topology NCDD. Mailpit mặc định giữ thư OTP để thử, không chuyển thư ra hộp thư thật.
+Redis và Mailpit thuộc topology NCDD. Mailpit mặc định giữ thư OTP để thử, không chuyển thư ra hộp thư thật; đọc thư tại `http://127.0.0.1:18025` trên máy Docker hoặc qua tunnel ở trên.
 
 ## 4. Tài khoản và quyền API
 

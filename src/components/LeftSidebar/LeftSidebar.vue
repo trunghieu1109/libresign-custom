@@ -6,6 +6,15 @@
 <template>
 	<NcAppNavigation>
 		<template #list>
+			<NcAppNavigationItem v-if="isAdmin"
+				id="provider-management"
+				:to="{ name: 'ProviderManagement' }"
+				:name="t('libresign', 'Chứng thư & ký số')"
+				@click="unselectFile">
+				<template #icon>
+					<NcIconSvgWrapper :path="mdiCertificate" :size="20" />
+				</template>
+			</NcAppNavigationItem>
 			<NcAppNavigationItem v-if="canRequestSign"
 				id="request-files"
 				:to="{name: 'requestFiles'}"
@@ -64,6 +73,7 @@ import { computed } from 'vue'
 import { getCurrentInstance } from 'vue'
 import {
 	mdiAccountCheck,
+	mdiCertificate,
 	mdiFileCheck,
 	mdiFileSign,
 	mdiFolder,

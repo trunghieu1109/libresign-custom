@@ -108,6 +108,12 @@ const routes: RouteRecordRaw[] = [
 
 	// internal pages
 	{
+		path: '/f/provider-management',
+		name: 'ProviderManagement',
+		beforeEnter: () => getCurrentUser()?.isAdmin === true || { path: '/' },
+		component: () => import('../views/ProviderManagement/ProviderManagement.vue'),
+	},
+	{
 		path: '/f/',
 		redirect: () => {
 			const canRequestSign = loadState('libresign', 'can_request_sign', false)
