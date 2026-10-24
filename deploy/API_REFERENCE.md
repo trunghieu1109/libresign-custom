@@ -3,12 +3,13 @@
 
 # Tham chiếu API cho bên tích hợp
 
-Đối chiếu source ngày **24/10/2026**. Đọc [hướng dẫn bắt đầu và các luồng](INTEGRATION.md) trước; tài liệu này bổ sung hợp đồng trường dữ liệu, trạng thái và lỗi. Dùng cùng revision với bản LibreSign được triển khai.
+Đối chiếu source ngày **24/10/2026**. Bắt đầu với [hướng dẫn thử bằng Postman](QUICKSTART.md); xem [các lựa chọn tích hợp và luồng nâng cao](INTEGRATION.md) khi cần. Tài liệu này bổ sung hợp đồng trường dữ liệu, trạng thái và lỗi. Dùng cùng revision với bản LibreSign được triển khai.
 
 ## Bộ tài liệu bàn giao
 
 | Tệp | Cách dùng |
 |---|---|
+| [QUICKSTART.md](QUICKSTART.md) | Địa chỉ máy thử, cấu hình Postman, cấp chứng thư, ký và lưu PDF kết quả |
 | [INTEGRATION.md](INTEGRATION.md) | Chuẩn bị kết nối, credential, cấp chứng thư và ký PDF từng bước |
 | [OpenAPI public](examples/libresign-public.openapi.json) | Import Swagger Editor/UI, Postman hoặc công cụ sinh client; chỉ có 24 thao tác dành cho tích hợp |
 | [Collection Postman](examples/libresign-public.postman_collection.json) + [environment mẫu](examples/libresign-public.postman_environment.json) | Gọi thử từng nhánh; điền credential riêng và thay dữ liệu mẫu |

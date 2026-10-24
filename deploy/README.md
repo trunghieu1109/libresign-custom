@@ -5,6 +5,8 @@
 
 Bộ cài nằm trọn trong repo source. Khi push `libresign-custom`, hãy commit cả `deploy/`, `.gitmodules`, lockfile, các thay đổi API và migration. Không cần repo Docker bên ngoài để dùng bộ cài này.
 
+Sau khi dựng server, gửi [hướng dẫn dành cho bên tích hợp](QUICKSTART.md) cùng collection/environment trong `examples/` và bàn giao credential riêng. Hướng dẫn có thông tin máy thử hiện tại; khi bàn giao máy khác, cập nhật URL và tài khoản tương ứng.
+
 Phạm vi: dựng mới môi trường **phát triển/UAT** trên Ubuntu Linux hoặc WSL2, dùng LibreSign 16-dev / Nextcloud 36 dev và SQLite. Bộ cài tái sử dụng NCDD pin theo checkout, không biến bản dev thành bản production. PHP/Composer/Node/npm chạy trong container. Linux cần filesystem hỗ trợ POSIX ACL; với WSL, clone trong filesystem Linux, ví dụ `/home/...`, thay vì `/mnt/c/...`.
 
 ## 1. Cài nhanh trên máy mới

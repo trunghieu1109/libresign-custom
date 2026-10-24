@@ -5,6 +5,8 @@
 
 Tài liệu dành cho backend của bệnh viện/doanh nghiệp/đối tác kết nối bản LibreSign custom. Hợp đồng ở đây là **Public JSON API** của fork, được đối chiếu với controller, service và collection ngày 24/10/2026. Người được cấp chứng thư/ký không cần tài khoản Nextcloud; mỗi hệ thống tích hợp dùng một tài khoản máy riêng.
 
+**Thử lần đầu:** làm theo [hướng dẫn Postman trên máy thử hiện tại](QUICKSTART.md) để nhận thông tin kết nối, cấp chứng thư, ký PDF và lưu file kết quả. Tài liệu dưới đây giải thích thêm các lựa chọn triển khai và luồng nâng cao.
+
 Bộ bàn giao: [tham chiếu đủ 24 endpoint, trường dữ liệu và lỗi](API_REFERENCE.md), [OpenAPI public để import](examples/libresign-public.openapi.json), [collection Postman](examples/libresign-public.postman_collection.json) và [environment mẫu](examples/libresign-public.postman_environment.json). Gửi các tệp này cùng cấu trúc thư mục `examples/` cho bên tích hợp; credential bàn giao riêng. `openapi-administration.json` không chứa các API public này.
 
 ## 1. Hai bên cần chuẩn bị gì?
