@@ -3187,5 +3187,10 @@
             }
         }
     },
-    "tags": []
+    "tags": [
+        {
+            "name": "public_provider",
+            "description": "Flat JSON integration API. PublicPage allows JSON authentication errors; every action MUST pass through call(), which enforces authentication and scope."
+        }
+    ]
 }

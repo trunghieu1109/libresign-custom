@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: 2026 LibreCode coop and contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# HTTP test access, or an upstream HTTPS reverse proxy managed separately.
+services:
+  nginx:
+    ports:
+      - "${DEPLOY_HTTP_BIND}:${DEPLOY_HTTP_PORT}:80"

@@ -62,6 +62,9 @@ Thanks to all the people who contribute to LibreSign:
 
 ## Documentation
 
+- Custom fork installer and operations: [deploy/README.md](deploy/README.md)
+- Public certificate/signing API integration handover: [deploy/INTEGRATION.md](deploy/INTEGRATION.md)
+- Public API endpoint and payload reference: [deploy/API_REFERENCE.md](deploy/API_REFERENCE.md); importable [OpenAPI](deploy/examples/libresign-public.openapi.json)
 - Official documentation: https://docs.libresign.coop/
 - Developer manual: https://docs.libresign.coop/developer_manual/
 - Documentation repository: https://github.com/LibreSign/documentation

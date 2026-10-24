@@ -103,6 +103,13 @@ class JSignPdfHandler extends Pkcs12Handler {
 		return $this->jSignParam;
 	}
 
+	/** Isolate native command options between headless provider documents. */
+	public function clearRequestParameters(): void {
+		$this->jSignParam = null;
+		$this->parsedSignatureText = [];
+		$this->setCertificate('')->setPassword('')->setVisibleElements([])->setSignatureParams([]);
+	}
+
 	/**
 	 * It's a workaround to create the folder structure that JSignPdf needs. Without
 	 * this, the JSignPdf will return the follow message to all commands:
@@ -218,6 +225,10 @@ class JSignPdfHandler extends Pkcs12Handler {
 			->setPassword($this->getPassword());
 
 		$parameters = [];
+		$reason = $this->getSignatureParams()['Reason'] ?? '';
+		if ($reason !== '') {
+			$parameters['-r'] = $reason;
+		}
 		$certificationLevel = $this->getCertificationLevel();
 		if ($certificationLevel !== null && !$this->getVisibleElements() && !$this->hasExistingSignatures($normalizedPdf)) {
 			$parameters['-cl'] = $certificationLevel;
@@ -301,7 +312,11 @@ class JSignPdfHandler extends Pkcs12Handler {
 					: '';
 
 				$signatureImagePath = $element->getTempFile();
-				if ($backgroundType === 'deleted') {
+				if (($this->getSignatureParams()['ProviderAppearance'] ?? false) && $signatureImagePath !== '') {
+					$params['--render-mode'] = SignerElementsService::RENDER_MODE_GRAPHIC_AND_DESCRIPTION;
+					$params['--img-path'] = $signatureImagePath;
+					unset($params['--bg-path']);
+				} elseif ($backgroundType === 'deleted') {
 					if ($renderMode === SignerElementsService::RENDER_MODE_SIGNAME_AND_DESCRIPTION) {
 						$params['--render-mode'] = SignerElementsService::RENDER_MODE_GRAPHIC_AND_DESCRIPTION;
 						$params['--img-path'] = $this->createTextImage(

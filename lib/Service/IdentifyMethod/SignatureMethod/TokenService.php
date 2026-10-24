@@ -28,19 +28,39 @@ class TokenService {
 	}
 
 	public function sendCodeByGateway(string $identifier, string $gatewayName): string {
+		$this->requireGateway($gatewayName);
+		$code = $this->secureRandom->generate(self::TOKEN_LENGTH, ISecureRandom::CHAR_DIGITS);
+		$this->deliverGatewayCode($identifier, $gatewayName, $code);
+		return $this->hasher->hash($code);
+	}
+
+	private function requireGateway(string $gatewayName): void {
 		$this->twofactorGatewayService->ensureAvailable($gatewayName);
 		if (!$this->twofactorGatewayService->isGatewayComplete($gatewayName)) {
 			// TRANSLATORS Error shown to the administrator when a two-factor gateway needed to send signing codes is not configured. %s is the gateway name.
 			throw new OCSForbiddenException($this->l10n->t('Gateway %s not configured on Two-Factor Gateway.', $gatewayName));
 		}
+	}
 
-		$code = $this->secureRandom->generate(self::TOKEN_LENGTH, ISecureRandom::CHAR_DIGITS);
+	private function deliverGatewayCode(string $identifier, string $gatewayName, string $code): void {
 		$this->twofactorGatewayService->send(
 			$gatewayName,
 			$identifier,
 			// TRANSLATORS Text of the verification code message sent to the signer. %s is the one-time code.
 			$this->l10n->t('%s is your LibreSign verification code.', $code)
 		);
+	}
+
+	/** Send one code to both contacts; return a hash only after both deliveries succeed. */
+	public function sendCodeByEmailAndGateway(string $email, string $displayName, string $identifier, string $gatewayName, bool $registration = false): string {
+		$this->requireGateway($gatewayName);
+		$code = $this->secureRandom->generate(self::TOKEN_LENGTH, ISecureRandom::CHAR_DIGITS);
+		if ($registration) {
+			$this->mail->sendCodeToRegister($email, $displayName, $code);
+		} else {
+			$this->mail->sendCodeToSign($email, $displayName, $code);
+		}
+		$this->deliverGatewayCode($identifier, $gatewayName, $code);
 		return $this->hasher->hash($code);
 	}
 
@@ -51,6 +71,12 @@ class TokenService {
 			name: $displayName,
 			code: $code
 		);
+		return $this->hasher->hash($code);
+	}
+
+	public function sendRegistrationCodeByEmail(string $email, string $displayName): string {
+		$code = $this->secureRandom->generate(self::TOKEN_LENGTH, ISecureRandom::CHAR_DIGITS);
+		$this->mail->sendCodeToRegister($email, $displayName, $code);
 		return $this->hasher->hash($code);
 	}
 }

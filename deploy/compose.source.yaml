@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: 2026 LibreCode coop and contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+services:
+  nextcloud:
+    volumes:
+      - ${LIBRESIGN_SOURCE_PATH}:/var/www/html/apps-extra/libresign
+      - ${LIBRESIGN_SOURCE_PATH}/deploy:/opt/libresign-deploy:ro
+  nginx:
+    volumes:
+      - ${LIBRESIGN_SOURCE_PATH}:/var/www/html/apps-extra/libresign:ro

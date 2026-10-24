@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: 2026 LibreCode coop and contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Overlay on the pinned NCDD topology. Its database is SQLite for this fork.
+services:
+  nextcloud:
+    image: ${SOURCE_PHP_IMAGE:?Missing runtime .env}
+    environment:
+      XDEBUG_MODE: "off"
+      NEXTCLOUD_HOST: ${SOURCE_PUBLIC_HOST}
+      NEXTCLOUD_PROTOCOL: ${SOURCE_PROTOCOL}
+    volumes:
+      - ${SOURCE_RUNTIME_DIR}/cache/composer:/var/www/.composer
+      - ${SOURCE_RUNTIME_DIR}/cache/npm:/var/www/.npm
+  redis:
+    image: redis:7-alpine
+  cron:
+    image: ${SOURCE_PHP_IMAGE}
+    user: www-data
+    working_dir: /var/www/html
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - "while :; do php -f /var/www/html/cron.php; sleep 60; done"
+    environment:
+      PHP_INI_SCAN_DIR: /usr/local/etc/php/conf.d:/var/www/php-config
+      XDEBUG_MODE: "off"
+    volumes:
+      - ${SOURCE_RUNTIME_DIR}/volumes/nextcloud:/var/www/html
+      - ${SOURCE_RUNTIME_DIR}/volumes/php:/var/www/php-config:ro
+      - ${LIBRESIGN_SOURCE_PATH}:/var/www/html/apps-extra/libresign:ro
+    restart: unless-stopped
+    depends_on:
+      nextcloud:
+        condition: service_started

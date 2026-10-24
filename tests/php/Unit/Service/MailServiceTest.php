@@ -75,6 +75,24 @@ final class MailServiceTest extends \OCA\Libresign\Tests\Unit\TestCase {
 		);
 	}
 
+	public function testRegistrationEmailDoesNotClaimToSignADocument(): void {
+		$template = $this->createMock(IEMailTemplate::class);
+		$template->expects($this->once())->method('setSubject')->with('LibreSign: Confirm certificate registration');
+		$this->mailer->method('createEMailTemplate')->willReturn($template);
+		$message = $this->mockSystemMessage();
+		$message->expects($this->once())->method('setTo')->with(['signer@example.com' => 'Signer'])->willReturnSelf();
+		$this->mailer->expects($this->once())->method('send')->with($message)->willReturn([]);
+		$this->service->sendCodeToRegister('signer@example.com', 'Signer', '123456');
+	}
+
+	public function testRegistrationEmailReportsFailedRecipients(): void {
+		$this->mockEmailTemplate();
+		$this->mockSystemMessage();
+		$this->mailer->method('send')->willReturn(['signer@example.com']);
+		$this->expectException(LibresignException::class);
+		$this->service->sendCodeToRegister('signer@example.com', 'Signer', '123456');
+	}
+
 	public function testSuccessNotifyUnsignedUser():void {
 		$this->mockRequest();
 		$this->mockStrategy(MailSenderStrategyPolicy::STRATEGY_SYSTEM);

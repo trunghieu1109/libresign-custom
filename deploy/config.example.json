@@ -1,0 +1,24 @@
+{
+  "projectName": "libresign-custom",
+  "publicUrl": "https://libresign-custom.localhost",
+  "publishHttp": false,
+  "httpBind": "127.0.0.1",
+  "httpPort": 8085,
+  "adminUser": "admin",
+  "integration": {
+    "uid": "provider-client",
+    "policy": {
+      "enabled": true,
+      "scopes": ["certificates:read", "certificates:write", "certificates:revoke", "signing:read", "signing:write"],
+      "otpChannel": "email",
+      "mockOtpEnabled": false,
+      "trustedSources": ["provider-client"]
+    }
+  },
+  "smtp": null,
+  "ca": {
+    "commonName": "LibreSign Development CA",
+    "organization": "LibreSign Development",
+    "country": "VN"
+  }
+}

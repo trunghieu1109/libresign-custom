@@ -55,6 +55,414 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/index.php/apps/libresign/api/v1/public/certificates/packages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List available internal CA packages */
+        get: operations["public_provider-packages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/certificates/registration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open or reuse a certificate registration */
+        post: operations["public_provider-register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/registration-sessions/{sessionId}/identity/info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit an adapter-verified identity dossier and evidence */
+        post: operations["public_provider-identity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/registration-sessions/{sessionId}/card-reader/info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit processed card-reader data; no hardware processing occurs here */
+        post: operations["public_provider-card-reader"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/registration-sessions/{sessionId}/otp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify the OTP without issuing a certificate */
+        post: operations["public_provider-verify-otp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/registration-sessions/{sessionId}/otp/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send or resend a registration code through the configured OTP channels */
+        post: operations["public_provider-resend-registration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/registration-sessions/{sessionId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Issue a certificate after verified OTP consent or an adapter assertion */
+        post: operations["public_provider-confirm-registration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/registration-sessions/{sessionId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an unissued enrollment */
+        post: operations["public_provider-cancel-registration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/certificates/registration/{sessionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retrieve enrollment progress and certificate metadata */
+        get: operations["public_provider-registration"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/certificates/dossier-reuse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Determine whether the integration can reuse its initial identity dossier */
+        get: operations["public_provider-reuse"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/registration-sessions/{sessionId}/reuse-face-match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit a fresh adapter face-match bound to this reuse enrollment */
+        post: operations["public_provider-face-match"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/certificates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Find certificates by personal identifier */
+        get: operations["public_provider-certificates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/certificates/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List certificates owned by the integration */
+        get: operations["public_provider-mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/certificates/{certAlias}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read certificate metadata by alias */
+        get: operations["public_provider-certificate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/certificates/{certAlias}/public": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the public certificate chain without private key material */
+        get: operations["public_provider-public-certificate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/certificates/{certAlias}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke a managed certificate */
+        post: operations["public_provider-revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read implemented signing limits */
+        get: operations["public_provider-capabilities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/signing-profiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List implemented signing profiles */
+        get: operations["public_provider-profiles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/signing-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a PDF signing request and initiate consent */
+        post: operations["public_provider-create-signing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/signing-requests/direct-sign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start PDF signing, or confirm an existing session on the second call */
+        post: operations["public_provider-direct-sign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/signing-requests/direct-sign/resend-otp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send or resend a signing code through the configured OTP channels */
+        post: operations["public_provider-resend-signing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/signing-requests/{transactionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retrieve signing progress and per-document results */
+        get: operations["public_provider-signing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/signing-requests/{transactionId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an unconfirmed signing session */
+        post: operations["public_provider-cancel-signing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/index.php/apps/libresign/api/v1/public/signing-requests/{transactionId}/documents/{documentId}/result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retrieve an individual signing result as Base64 */
+        get: operations["public_provider-result"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ocs/v2.php/apps/libresign/api/{apiVersion}/account/create/{uuid}": {
         parameters: {
             query?: never;
@@ -735,6 +1143,176 @@ export type paths = {
         post?: never;
         /** Clear a user policy preference */
         delete: operations["policy-clear-user-preference"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ocs/v2.php/apps/libresign/api/{apiVersion}/provider/certificates/packages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the available internal CA package and enabled confirmation methods */
+        get: operations["provider_certificate-packages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ocs/v2.php/apps/libresign/api/{apiVersion}/provider/certificates/registration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register a certificate using normalized identity data supplied by a trusted adapter */
+        post: operations["provider_certificate-register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ocs/v2.php/apps/libresign/api/{apiVersion}/provider/registration-sessions/{sessionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retrieve a registration owned by the calling integration */
+        get: operations["provider_certificate-registration"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ocs/v2.php/apps/libresign/api/{apiVersion}/provider/registration-sessions/{sessionId}/otp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send or resend an OTP to the stored verified contact */
+        post: operations["provider_certificate-send-code"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ocs/v2.php/apps/libresign/api/{apiVersion}/provider/registration-sessions/{sessionId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm registration and issue exactly one managed certificate */
+        post: operations["provider_certificate-confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ocs/v2.php/apps/libresign/api/{apiVersion}/provider/registration-sessions/{sessionId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a pending registration without issuing a certificate */
+        post: operations["provider_certificate-cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ocs/v2.php/apps/libresign/api/{apiVersion}/provider/certificates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List certificates owned by the integration, optionally filtering by personal identifier */
+        get: operations["provider_certificate-certificates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ocs/v2.php/apps/libresign/api/{apiVersion}/provider/certificates/{certAlias}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retrieve a certificate by its integration-scoped alias */
+        get: operations["provider_certificate-certificate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ocs/v2.php/apps/libresign/api/{apiVersion}/provider/certificates/{certAlias}/public": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retrieve the public PEM chain, ordered from leaf to root */
+        get: operations["provider_certificate-public-certificate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ocs/v2.php/apps/libresign/api/{apiVersion}/provider/certificates/{certAlias}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke an integration-owned certificate through LibreSign's existing CRL service */
+        post: operations["provider_certificate-revoke"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2083,8 +2661,190 @@ export type components = {
             /** Format: int64 */
             status: number;
         };
+        ProviderCertificate: {
+            certAlias: string;
+            serialNumber: string;
+            fullName: string;
+            status: string;
+            /** Format: int64 */
+            validFrom: number;
+            /** Format: int64 */
+            validTo: number;
+            fingerprintSha256: string;
+        };
+        ProviderCertificateList: {
+            items: components["schemas"]["ProviderCertificate"][];
+            /** Format: int64 */
+            pageIndex: number;
+            /** Format: int64 */
+            pageSize: number;
+            hasMore: boolean;
+        };
+        ProviderCode: {
+            sessionId: string;
+            status: string;
+            /** Format: int64 */
+            expiresAt: number;
+        };
+        ProviderError: {
+            error: string;
+            message: string;
+        };
+        ProviderPackages: {
+            items: {
+                code: string;
+                name: string;
+                certificateEngine: string;
+                /** Format: int64 */
+                validityDays: number;
+                confirmationMethods: string[];
+            }[];
+        };
+        ProviderPerson: {
+            fullName: string;
+            personalIdNumber: string;
+            email?: string;
+            phoneNumber?: string;
+        };
+        ProviderPublicCertificate: {
+            certAlias: string;
+            format: string;
+            chain: string[];
+        };
+        ProviderRegistration: {
+            sessionId: string;
+            status: string;
+            /** Format: int64 */
+            createdAt: number;
+            /** Format: int64 */
+            expiresAt: number;
+            confirmationMethod: string;
+            /** @enum {string|null} */
+            otpChannel: "email" | "sms" | "email_sms" | null;
+            /** Format: int64 */
+            otpExpiresAt: number | null;
+            challengeBase64?: string;
+            certificate?: components["schemas"]["ProviderCertificate"];
+        };
+        ProviderVerification: {
+            method: string;
+            source: string;
+            reference: string;
+            verifiedAt: string;
+        };
         PublicCapabilities: {
             libresign?: components["schemas"]["Capabilities"];
+        };
+        PublicCertificate: {
+            certAlias: string;
+            subjectName: string;
+            personalIdNumber: string;
+            phone: string;
+            email: string;
+            status: string;
+            isConfirmed: boolean;
+            serialNumber: string;
+            validFrom: string;
+            validTo: string;
+            fingerprintSha256: string;
+        };
+        PublicEnvelope: {
+            status: boolean;
+            timestamp: string;
+            transId: string;
+            data: ({
+                [key: string]: Record<string, never>;
+            } | {
+                [key: string]: Record<string, never>;
+            }[]) | null;
+            /** Format: int64 */
+            totalItem?: number;
+            error?: {
+                code: string;
+                message: string;
+            };
+        };
+        PublicIdentityEnvelope: {
+            status: boolean;
+            timestamp: string;
+            transId: string;
+            data: components["schemas"]["PublicIdentityResult"];
+            error?: {
+                code: string;
+                message: string;
+            };
+        };
+        PublicIdentityResult: {
+            session: components["schemas"]["PublicRegistration"];
+            faceMatch: {
+                isPass: boolean;
+                score: (number) | null;
+            };
+            certificate: unknown;
+        };
+        PublicRegistration: {
+            sessionId: string;
+            status: string;
+            step: string;
+            registrationMethod: string;
+            personalIdNumber: string;
+            fullName: string;
+            phone: string;
+            email: string;
+            birthDate: string | null;
+            address: string | null;
+            reusedCertificate: boolean;
+            reusePreviousDossier: boolean;
+            requireReuseFaceMatch: boolean;
+            reusedDossier: boolean;
+            confirmationMethod: string;
+            nextAction: string;
+            otpRequired: boolean;
+            /** @enum {string|null} */
+            otpChannel: "email" | "sms" | "email_sms" | null;
+            otpExpiresAt: string | null;
+            registrationUrl: string | null;
+            qrCode: string | null;
+            registrationMode: string | null;
+            message: string;
+            expiresAt: string;
+            certificate?: components["schemas"]["PublicCertificate"];
+            challengeBase64?: string | null;
+            reusedSession?: boolean;
+        };
+        PublicRegistrationEnvelope: {
+            status: boolean;
+            timestamp: string;
+            transId: string;
+            data: components["schemas"]["PublicRegistration"];
+            error?: {
+                code: string;
+                message: string;
+            };
+        };
+        PublicReuseEnvelope: {
+            status: boolean;
+            timestamp: string;
+            transId: string;
+            data: components["schemas"]["PublicReuseInfo"];
+            error?: {
+                code: string;
+                message: string;
+            };
+        };
+        PublicReuseInfo: {
+            edgeDeployment: boolean;
+            reusable: boolean;
+            reasonCode: string;
+            hasPreviousDossier: boolean;
+            cccdExpired: boolean;
+            defaultReusePreviousDossier: boolean;
+            defaultRequireReuseFaceMatch: boolean;
+            reuseFaceThreshold: (number) | null;
+            reuseFaceScale: (number) | null;
+            fullName: string | null;
+            phone: string | null;
+            idExpireDate: string | null;
         };
         ReminderSettings: {
             /** Format: int64 */
@@ -2561,6 +3321,2934 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CrlErrorResponse"];
+                };
+            };
+        };
+    };
+    "public_provider-packages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description Twelve digit personal identifier
+                     * @default
+                     */
+                    personalIdNumber?: string;
+                    /**
+                     * @description Verified full name
+                     * @default
+                     */
+                    fullName?: string;
+                    /**
+                     * @description Verified email; required for email and email_sms OTP
+                     * @default
+                     */
+                    email?: string;
+                    /**
+                     * @description Vietnamese local or E.164 phone number; required for sms and email_sms OTP
+                     * @default
+                     */
+                    phone?: string;
+                    /**
+                     * @description CARD_READER or QR_SELF_UPLOAD
+                     * @default
+                     */
+                    registrationMethod?: string;
+                    /**
+                     * @description Available internal package
+                     * @default internal-default
+                     */
+                    packageCode?: string;
+                    /**
+                     * @description Reuse eligible initial identity dossier
+                     * @default false
+                     */
+                    reusePreviousDossier?: boolean;
+                    /**
+                     * @description Require adapter face-match before dossier reuse
+                     * @default false
+                     */
+                    requireReuseFaceMatch?: boolean;
+                    /**
+                     * @description Return an existing suitable active certificate
+                     * @default true
+                     */
+                    reuseActiveCertificate?: boolean;
+                    /**
+                     * @description service_otp or external_assertion
+                     * @default service_otp
+                     */
+                    confirmationMethod?: string;
+                    /** @description Allowed HTTPS callback URL */
+                    callbackUrl?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-identity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Registration UUID */
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description Personal identifier from the identity document
+                     * @default
+                     */
+                    identifyNumber?: string;
+                    /**
+                     * @description Full name on the identity document
+                     * @default
+                     */
+                    name?: string;
+                    /**
+                     * @description Identity document address
+                     * @default
+                     */
+                    address?: string;
+                    /**
+                     * @description Date in dd/MM/yyyy or yyyy-MM-dd
+                     * @default
+                     */
+                    dateOfBirth?: string;
+                    /**
+                     * @description Identity document issue date
+                     * @default
+                     */
+                    issueDate?: string;
+                    /**
+                     * @description Identity document expiry date
+                     * @default
+                     */
+                    expiredDate?: string;
+                    /**
+                     * @description Identity document gender
+                     * @default
+                     */
+                    sex?: string;
+                    /**
+                     * @description Passing identity verification reported by the trusted integration
+                     * @default false
+                     */
+                    isPass?: boolean;
+                    /**
+                     * @description Adapter receipt and verification timestamp
+                     * @default {}
+                     */
+                    verification?: {
+                        [key: string]: Record<string, never>;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-card-reader": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Registration UUID */
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description Required twelve digit identity number
+                     * @default
+                     */
+                    identifyNumber?: string;
+                    /**
+                     * @description Required name on the identity document
+                     * @default
+                     */
+                    name?: string;
+                    /**
+                     * @description Required permanent address
+                     * @default
+                     */
+                    address?: string;
+                    /**
+                     * @description Required date in dd/MM/yyyy or yyyy-MM-dd
+                     * @default
+                     */
+                    dateOfBirth?: string;
+                    /**
+                     * @description Required identity document issue date
+                     * @default
+                     */
+                    issueDate?: string;
+                    /**
+                     * @description Required identity document expiry date
+                     * @default
+                     */
+                    expiredDate?: string;
+                    /**
+                     * @description Required gender from the identity document
+                     * @default
+                     */
+                    sex?: string;
+                    /**
+                     * @description Required Base64 captured portrait (PNG/JPEG)
+                     * @default
+                     */
+                    imageCap?: string;
+                    /**
+                     * @description Required Base64 portrait read from the chip (PNG/JPEG)
+                     * @default
+                     */
+                    imageChip?: string;
+                    /**
+                     * @description Required Base64 signed chip data; verified by the adapter
+                     * @default
+                     */
+                    sodData?: string;
+                    /**
+                     * @description Required passing verification reported by the trusted adapter
+                     * @default false
+                     */
+                    isPass?: boolean;
+                    /**
+                     * Format: int64
+                     * @description Required integer score from 0 to 100
+                     */
+                    score?: number | null;
+                    /**
+                     * @description Optional nationality
+                     * @default
+                     */
+                    nationality?: string;
+                    /**
+                     * @description Optional ethnicity
+                     * @default
+                     */
+                    nation?: string;
+                    /**
+                     * @description Optional religion
+                     * @default
+                     */
+                    religion?: string;
+                    /**
+                     * @description Optional hometown
+                     * @default
+                     */
+                    hometown?: string;
+                    /**
+                     * @description Optional identifying features
+                     * @default
+                     */
+                    character?: string;
+                    /**
+                     * @description Optional father name
+                     * @default
+                     */
+                    fatherName?: string;
+                    /**
+                     * @description Optional mother name
+                     * @default
+                     */
+                    motherName?: string;
+                    /**
+                     * @description Optional spouse name
+                     * @default
+                     */
+                    partnerName?: string;
+                    /**
+                     * @description Optional ICAO MRZ text lines
+                     * @default
+                     */
+                    mrz?: string;
+                    /**
+                     * @description Optional Base64 chip data group 1
+                     * @default
+                     */
+                    dg1DataBase64?: string;
+                    /**
+                     * @description Optional Base64 chip data group 2
+                     * @default
+                     */
+                    dg2DataBase64?: string;
+                    /**
+                     * @description Optional Base64 chip data group 13
+                     * @default
+                     */
+                    dg13DataBase64?: string;
+                    /**
+                     * @description Optional Base64 chip data group 14
+                     * @default
+                     */
+                    dg14DataBase64?: string;
+                    /** @description Optional updated phone before dossier acceptance and OTP delivery */
+                    phone?: string | null;
+                    /** @description Optional updated email before dossier acceptance and OTP delivery */
+                    email?: string | null;
+                    /**
+                     * @description Optional adapter receipt; authenticated integration supplies the default source
+                     * @default {}
+                     */
+                    verification?: {
+                        [key: string]: Record<string, never>;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicIdentityEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-verify-otp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Registration UUID */
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description Six digit code; JSON body is preferred over query logging
+                     * @default
+                     */
+                    otpCode?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-resend-registration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Registration UUID */
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-confirm-registration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Registration UUID */
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description Base64 RSA-SHA256 signature of the supplied enrollment challenge
+                     * @default
+                     */
+                    assertion?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-cancel-registration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Registration UUID */
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-registration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Registration UUID */
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-reuse": {
+        parameters: {
+            query?: {
+                /** @description Twelve digit personal identifier */
+                personalIdNumber?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicReuseEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicReuseEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicReuseEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicReuseEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicReuseEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicReuseEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicReuseEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicReuseEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicReuseEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicReuseEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-face-match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Registration UUID */
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description Current portrait PNG or JPEG
+                     * @default
+                     */
+                    portraitBase64?: string;
+                    /**
+                     * @description Passing adapter receipt, score, sessionId and timestamp
+                     * @default {}
+                     */
+                    verification?: {
+                        [key: string]: Record<string, never>;
+                    };
+                    /**
+                     * Format: double
+                     * @description Requested threshold, never below configured minimum
+                     */
+                    threshold?: number | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicRegistrationEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-certificates": {
+        parameters: {
+            query?: {
+                /** @description Twelve digit personal identifier */
+                personalIdNumber?: string;
+                /** @description One based page */
+                pageIndex?: number;
+                /** @description Page size, 1-100 */
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-mine": {
+        parameters: {
+            query?: {
+                /** @description One based page */
+                pageIndex?: number;
+                /** @description Page size, 1-100 */
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Managed certificate alias */
+                certAlias: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-public-certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Managed certificate alias */
+                certAlias: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Managed certificate alias */
+                certAlias: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /**
+                     * Format: int64
+                     * @description RFC5280 reason code
+                     * @default 0
+                     */
+                    reasonCode?: number;
+                    /**
+                     * @description Optional revocation explanation
+                     * @default
+                     */
+                    reasonText?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-profiles": {
+        parameters: {
+            query?: {
+                /** @description One based page */
+                pageIndex?: number;
+                /** @description Page size, 1-100 */
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-create-signing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description Personal identifier when certAlias is omitted
+                     * @default
+                     */
+                    personalIdNumber?: string;
+                    /**
+                     * @description Active managed certificate
+                     * @default
+                     */
+                    certAlias?: string;
+                    /**
+                     * @description PDF for a single document
+                     * @default
+                     */
+                    fileBase64?: string;
+                    /**
+                     * @description Batch of up to 100 PDFs
+                     * @default []
+                     */
+                    files?: {
+                        [key: string]: Record<string, never>;
+                    }[];
+                    /**
+                     * @description Name of the single document
+                     * @default
+                     */
+                    documentName?: string;
+                    /**
+                     * @description DEFAULT_PDF
+                     * @default DEFAULT_PDF
+                     */
+                    signingProfileCode?: string;
+                    /**
+                     * @description service_otp or external_assertion
+                     * @default service_otp
+                     */
+                    confirmationMethod?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Accepted; signing is still processing */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Batch byte limit exceeded */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-direct-sign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description Personal identifier when certAlias is omitted
+                     * @default
+                     */
+                    personalIdNumber?: string;
+                    /**
+                     * @description Active managed certificate
+                     * @default
+                     */
+                    certAlias?: string;
+                    /**
+                     * @description PDF for a single document
+                     * @default
+                     */
+                    fileBase64?: string;
+                    /**
+                     * @description Batch of up to 100 PDFs
+                     * @default []
+                     */
+                    files?: {
+                        [key: string]: Record<string, never>;
+                    }[];
+                    /**
+                     * @description Name of the single document
+                     * @default
+                     */
+                    documentName?: string;
+                    /**
+                     * @description Session from the first call, used only for confirmation
+                     * @default
+                     */
+                    signSessionId?: string;
+                    /**
+                     * @description Six digit signing OTP received through the configured channels
+                     * @default
+                     */
+                    otpValue?: string;
+                    /**
+                     * @description Adapter signature for external_assertion
+                     * @default
+                     */
+                    assertion?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Accepted; signing is still processing */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Batch byte limit exceeded */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-resend-signing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Signing UUID */
+                    signSessionId: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-signing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Signing UUID */
+                transactionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-cancel-signing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Signing UUID */
+                transactionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+        };
+    };
+    "public_provider-result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Signing UUID */
+                transactionId: string;
+                /** @description Document id supplied by the integration */
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current result or confirmation challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Integration authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Scope or consent proof rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Resource not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Conflicting state or idempotency key */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description OTP resend or attempt limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Internal workflow error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
+                };
+            };
+            /** @description Certificate or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEnvelope"];
                 };
             };
         };
@@ -5259,6 +8947,1496 @@ export interface operations {
                         ocs: {
                             meta: components["schemas"]["OCSMeta"];
                             data: components["schemas"]["ErrorResponse"];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    "provider_certificate-packages": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Required to be true for the API request to pass */
+                "OCS-APIRequest": boolean;
+            };
+            path: {
+                apiVersion: "v1";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Available package */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderPackages"];
+                        };
+                    };
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Integration or scope not enabled */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Conflicting state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Rate limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description CA or delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    "provider_certificate-register": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Required to be true for the API request to pass */
+                "OCS-APIRequest": boolean;
+            };
+            path: {
+                apiVersion: "v1";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Idempotency identifier scoped to this integration */
+                    requestId: string;
+                    /** @description Normalized personal information; no Nextcloud account required */
+                    person: components["schemas"]["ProviderPerson"];
+                    /** @description Verification receipt from the identity adapter */
+                    verification: components["schemas"]["ProviderVerification"];
+                    /** @description external_assertion or service_otp */
+                    confirmationMethod: string;
+                    /**
+                     * @description Code returned by the packages endpoint
+                     * @default internal-default
+                     */
+                    packageCode?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Registration created or identical request replayed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderRegistration"];
+                        };
+                    };
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Integration, scope or confirmation method not enabled */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description requestId reused with different input */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Rate limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description CA unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    "provider_certificate-registration": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Required to be true for the API request to pass */
+                "OCS-APIRequest": boolean;
+            };
+            path: {
+                apiVersion: "v1";
+                /** @description Registration session identifier */
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current registration state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderRegistration"];
+                        };
+                    };
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Integration or scope not enabled */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Session not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Conflicting state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Rate limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    "provider_certificate-send-code": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Required to be true for the API request to pass */
+                "OCS-APIRequest": boolean;
+            };
+            path: {
+                apiVersion: "v1";
+                /** @description Registration session identifier */
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Code sent; the code itself is never returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderCode"];
+                        };
+                    };
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Integration or method not enabled */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Session not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Session cannot accept an OTP */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Resend cooldown or send limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Delivery service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    "provider_certificate-confirm": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Required to be true for the API request to pass */
+                "OCS-APIRequest": boolean;
+            };
+            path: {
+                apiVersion: "v1";
+                /** @description Registration session identifier */
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description Six digit code for service_otp
+                     * @default
+                     */
+                    otpValue?: string;
+                    /**
+                     * @description Base64 RSA-SHA256 signature over the decoded challengeBase64 bytes for external_assertion
+                     * @default
+                     */
+                    assertion?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Certificate active or completed confirmation replayed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderRegistration"];
+                        };
+                    };
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Invalid confirmation proof or insufficient scope */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Session not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Session cannot be confirmed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Rate limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description CA unavailable or issuance requires administrative recovery */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    "provider_certificate-cancel": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Required to be true for the API request to pass */
+                "OCS-APIRequest": boolean;
+            };
+            path: {
+                apiVersion: "v1";
+                /** @description Registration session identifier */
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Registration cancelled */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderRegistration"];
+                        };
+                    };
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Integration or scope not enabled */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Session not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Registration is no longer pending */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Rate limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    "provider_certificate-certificates": {
+        parameters: {
+            query?: {
+                /** @description Personal identifier for an exact, integration-scoped lookup */
+                personalIdNumber?: string;
+                /** @description Zero based page index */
+                pageIndex?: number;
+                /** @description Number of entries, 1-100 */
+                pageSize?: number;
+            };
+            header: {
+                /** @description Required to be true for the API request to pass */
+                "OCS-APIRequest": boolean;
+            };
+            path: {
+                apiVersion: "v1";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Certificate page */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderCertificateList"];
+                        };
+                    };
+                };
+            };
+            /** @description Invalid filter or pagination */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Integration or scope not enabled */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Conflicting state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Rate limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    "provider_certificate-certificate": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Required to be true for the API request to pass */
+                "OCS-APIRequest": boolean;
+            };
+            path: {
+                apiVersion: "v1";
+                /** @description Managed certificate alias */
+                certAlias: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Certificate metadata and native revocation status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderCertificate"];
+                        };
+                    };
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Integration or scope not enabled */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Certificate not found in this integration */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Conflicting state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Rate limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    "provider_certificate-public-certificate": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Required to be true for the API request to pass */
+                "OCS-APIRequest": boolean;
+            };
+            path: {
+                apiVersion: "v1";
+                /** @description Managed certificate alias */
+                certAlias: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Public certificate chain; no private key or PFX password */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderPublicCertificate"];
+                        };
+                    };
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Integration or scope not enabled */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Certificate not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Conflicting state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Rate limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    "provider_certificate-revoke": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Required to be true for the API request to pass */
+                "OCS-APIRequest": boolean;
+            };
+            path: {
+                apiVersion: "v1";
+                /** @description Managed certificate alias */
+                certAlias: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /**
+                     * Format: int64
+                     * @description RFC5280 revocation reason, excluding reserved value 7
+                     * @default 0
+                     */
+                    reasonCode?: number;
+                    /**
+                     * @description Optional explanation of at most 512 bytes
+                     * @default
+                     */
+                    reasonText?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Certificate revoked or already revoked */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderCertificate"];
+                        };
+                    };
+                };
+            };
+            /** @description Invalid revocation reason */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Integration or revocation scope not enabled */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Certificate not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Revocation could not be completed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Session expired */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Rate limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
+                        };
+                    };
+                };
+            };
+            /** @description Service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ocs: {
+                            meta: components["schemas"]["OCSMeta"];
+                            data: components["schemas"]["ProviderError"];
                         };
                     };
                 };

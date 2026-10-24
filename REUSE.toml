@@ -22,6 +22,8 @@ path = [
     "appinfo/info.xml",
     "composer.json",
     "composer.lock",
+    "deploy/config.example.json",
+    "deploy/examples/*.json",
     ".github/ISSUE_TEMPLATE/2_feature_request.md",
     ".github/ISSUE_TEMPLATE/feature_request.md",
     ".github/pull_request_template.md",

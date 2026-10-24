@@ -26,3 +26,5 @@ node_modules/
 /coverage
 /dist/
 /test-results/
+/.source-runtime/
+__pycache__/

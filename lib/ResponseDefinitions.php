@@ -945,6 +945,38 @@ namespace OCA\Libresign;
  *     message: string,
  * }
  *
+ * Provider API contracts
+ *
+ * @psalm-type LibresignProviderPerson = array{fullName: string, personalIdNumber: string, email?: string, phoneNumber?: string}
+ * @psalm-type LibresignProviderVerification = array{method: string, source: string, reference: string, verifiedAt: string}
+ * @psalm-type LibresignProviderError = array{error: string, message: string}
+ * @psalm-type LibresignProviderPackages = array{items: list<array{code: string, name: string, certificateEngine: string, validityDays: int, confirmationMethods: list<string>}>}
+ * @psalm-type LibresignProviderCertificate = array{certAlias: string, serialNumber: string, fullName: string, status: string, validFrom: int, validTo: int, fingerprintSha256: string}
+ * @psalm-type LibresignProviderRegistration = array{sessionId: string, status: string, createdAt: int, expiresAt: int, confirmationMethod: string, otpChannel: 'email'|'sms'|'email_sms'|null, otpExpiresAt: int|null, challengeBase64?: string, certificate?: LibresignProviderCertificate}
+ * @psalm-type LibresignProviderCertificateList = array{items: list<LibresignProviderCertificate>, pageIndex: int, pageSize: int, hasMore: bool}
+ * @psalm-type LibresignProviderPublicCertificate = array{certAlias: string, format: string, chain: list<string>}
+ * @psalm-type LibresignProviderCode = array{sessionId: string, status: string, expiresAt: int}
+ *
+ * @psalm-type LibresignPublicEnvelope = array{status: bool, timestamp: string, transId: string, data: array<string, mixed>|list<array<string, mixed>>|null, totalItem?: int, error?: array{code: string, message: string}}
+ * @psalm-type LibresignPublicCertificate = array{certAlias: string, subjectName: string, personalIdNumber: string, phone: string, email: string, status: string, isConfirmed: bool, serialNumber: string, validFrom: string, validTo: string, fingerprintSha256: string}
+ * @psalm-type LibresignPublicRegistration = array{
+ *     sessionId: string, status: string, step: string, registrationMethod: string,
+ *     personalIdNumber: string, fullName: string, phone: string, email: string, birthDate: string|null, address: string|null,
+ *     reusedCertificate: bool, reusePreviousDossier: bool, requireReuseFaceMatch: bool, reusedDossier: bool,
+ *     confirmationMethod: string, nextAction: string, otpRequired: bool, otpChannel: 'email'|'sms'|'email_sms'|null, otpExpiresAt: string|null,
+ *     registrationUrl: string|null, qrCode: string|null, registrationMode: string|null, message: string, expiresAt: string,
+ *     certificate?: LibresignPublicCertificate, challengeBase64?: string|null, reusedSession?: bool,
+ * }
+ * @psalm-type LibresignPublicIdentityResult = array{session: LibresignPublicRegistration, faceMatch: array{isPass: bool, score: int|float|null}, certificate: null}
+ * @psalm-type LibresignPublicReuseInfo = array{
+ *     edgeDeployment: bool, reusable: bool, reasonCode: string, hasPreviousDossier: bool, cccdExpired: bool,
+ *     defaultReusePreviousDossier: bool, defaultRequireReuseFaceMatch: bool,
+ *     reuseFaceThreshold: int|float|null, reuseFaceScale: int|float|null, fullName: string|null, phone: string|null, idExpireDate: string|null,
+ * }
+ * @psalm-type LibresignPublicRegistrationEnvelope = array{status: bool, timestamp: string, transId: string, data: LibresignPublicRegistration|null, error?: array{code: string, message: string}}
+ * @psalm-type LibresignPublicIdentityEnvelope = array{status: bool, timestamp: string, transId: string, data: LibresignPublicIdentityResult|null, error?: array{code: string, message: string}}
+ * @psalm-type LibresignPublicReuseEnvelope = array{status: bool, timestamp: string, transId: string, data: LibresignPublicReuseInfo|null, error?: array{code: string, message: string}}
+ *
  * Capabilities contracts
  *
  * @psalm-type LibresignCapabilities = array{

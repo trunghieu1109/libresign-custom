@@ -345,6 +345,22 @@ class MailService {
 		]);
 	}
 
+	public function sendCodeToRegister(string $email, string $name, string $code): void {
+		$template = $this->mailer->createEMailTemplate('libresign.CertificateRegistration');
+		// TRANSLATORS Subject of the code email used to confirm a certificate registration.
+		$template->setSubject($this->l10n->t('LibreSign: Confirm certificate registration'));
+		$template->addHeader();
+		// TRANSLATORS The code confirms certificate issuance, not a document signature.
+		$template->addBodyText($this->l10n->t('Use this code to confirm your certificate registration:'));
+		$template->addBodyText($code);
+		$message = $this->mailer->createMessage();
+		$message->setTo([$email => $name]);
+		$message->useTemplate($template);
+		if ($this->mailer->send($message) !== []) {
+			throw new LibresignException('Certificate registration email could not be delivered');
+		}
+	}
+
 	public function sendCodeToSign(string $email, string $name, string $code): void {
 		$emailTemplate = $this->mailer->createEMailTemplate('settings.TestEmail');
 		// TRANSLATORS Email subject for a one-time verification code required to sign a document.

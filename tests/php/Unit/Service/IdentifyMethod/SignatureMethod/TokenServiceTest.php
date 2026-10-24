@@ -17,6 +17,7 @@ use OCP\AppFramework\OCS\OCSForbiddenException;
 use OCP\IL10N;
 use OCP\Security\IHasher;
 use OCP\Security\ISecureRandom;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -116,6 +117,72 @@ final class TokenServiceTest extends TestCase {
 		self::assertSame('hashed-code', $this->createService()->sendCodeByEmail('signer@domain.coop', 'John Doe'));
 	}
 
+	public function testRegistrationCodeUsesRegistrationEmailAndOnlyReturnsTheHash(): void {
+		$this->secureRandom->expects($this->once())->method('generate')
+			->with(TokenService::TOKEN_LENGTH, ISecureRandom::CHAR_DIGITS)->willReturn('123456');
+		$this->mailService->expects($this->once())->method('sendCodeToRegister')->with('signer@example.com', 'Signer', '123456');
+		$this->mailService->expects($this->never())->method('sendCodeToSign');
+		$this->hasher->expects($this->once())->method('hash')->with('123456')->willReturn('hashed-code');
+		self::assertSame('hashed-code', $this->createService()->sendRegistrationCodeByEmail('signer@example.com', 'Signer'));
+	}
+
+	public static function purposes(): array {
+		return ['registration' => [true], 'signing' => [false]];
+	}
+
+	#[DataProvider('purposes')]
+	public function testBothChannelsReceiveExactlyTheSameCode(bool $registration): void {
+		$gateway = $this->enableGateway();
+		$this->secureRandom->expects($this->once())->method('generate')
+			->with(TokenService::TOKEN_LENGTH, ISecureRandom::CHAR_DIGITS)->willReturn('123456');
+		$this->mailService->expects($this->once())->method($registration ? 'sendCodeToRegister' : 'sendCodeToSign')
+			->with('signer@example.com', 'Signer', '123456');
+		$this->mailService->expects($this->never())->method($registration ? 'sendCodeToSign' : 'sendCodeToRegister');
+		$this->hasher->expects($this->once())->method('hash')->with('123456')->willReturn('hashed-code');
+		self::assertSame('hashed-code', $this->createService()->sendCodeByEmailAndGateway('signer@example.com', 'Signer', '+84901234567', 'sms', $registration));
+		self::assertSame([['gateway' => 'sms', 'identifier' => '+84901234567', 'message' => '123456 is your LibreSign verification code.']], $gateway->sentMessages);
+	}
+
+	public function testBothChannelsCheckGatewayBeforeSendingEmail(): void {
+		$this->appManager->method('isEnabledForAnyone')->willReturn(false);
+		$this->mailService->expects($this->never())->method('sendCodeToRegister');
+		$this->mailService->expects($this->never())->method('sendCodeToSign');
+		$this->secureRandom->expects($this->never())->method('generate');
+		$this->hasher->expects($this->never())->method('hash');
+		$this->expectException(LibresignException::class);
+		$this->createService()->sendCodeByEmailAndGateway('signer@example.com', 'Signer', '+84901234567', 'sms');
+	}
+
+	public function testSmsFailureAfterEmailDoesNotReturnAUsableHash(): void {
+		$this->enableGateway(failDelivery: true);
+		$this->secureRandom->method('generate')->willReturn('123456');
+		$this->mailService->expects($this->once())->method('sendCodeToRegister')->with('signer@example.com', 'Signer', '123456');
+		$this->hasher->expects($this->never())->method('hash');
+		$this->expectException(\RuntimeException::class);
+		$this->createService()->sendCodeByEmailAndGateway('signer@example.com', 'Signer', '+84901234567', 'sms', true);
+	}
+
+	public function testEmailFailureDoesNotReturnAUsableHashOrSendSms(): void {
+		$gateway = $this->enableGateway();
+		$this->secureRandom->method('generate')->willReturn('123456');
+		$this->mailService->method('sendCodeToSign')->willThrowException(new \RuntimeException('Mail unavailable'));
+		$this->hasher->expects($this->never())->method('hash');
+		try {
+			$this->createService()->sendCodeByEmailAndGateway('signer@example.com', 'Signer', '+84901234567', 'sms');
+			$this->fail('Expected mail delivery failure');
+		} catch (\RuntimeException) {
+			self::assertSame([], $gateway->sentMessages);
+		}
+	}
+
+	private function enableGateway(bool $failDelivery = false): TokenServiceGatewayIntegrationStub {
+		$this->appManager->method('isEnabledForAnyone')->with('twofactor_gateway')->willReturn(true);
+		$gateway = new TokenServiceGatewayIntegrationStub(true, $failDelivery);
+		$this->container->method('get')->with('OCA\\TwoFactorGateway\\Service\\GatewayDirectIntegrationService')->willReturn($gateway);
+		$this->l10n->method('t')->willReturnCallback(static fn ($text, $code) => sprintf($text, $code));
+		return $gateway;
+	}
+
 	private function createService(): TokenService {
 		return new TokenService(
 			$this->secureRandom,
@@ -137,6 +204,7 @@ final class TokenServiceGatewayIntegrationStub {
 
 	public function __construct(
 		private bool $complete,
+		private bool $failDelivery = false,
 	) {
 	}
 
@@ -148,6 +216,9 @@ final class TokenServiceGatewayIntegrationStub {
 	}
 
 	public function send(string $gatewayName, string $identifier, string $message): void {
+		if ($this->failDelivery) {
+			throw new \RuntimeException('Gateway unavailable');
+		}
 		$this->sentMessages[] = [
 			'gateway' => $gatewayName,
 			'identifier' => $identifier,

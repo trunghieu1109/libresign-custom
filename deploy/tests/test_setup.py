@@ -1,0 +1,338 @@
+# SPDX-FileCopyrightText: 2026 LibreCode coop and contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+"""Installer regression checks; only private temporary files, no Docker/network."""
+import contextlib
+import importlib.util
+import io
+import json
+import os
+from pathlib import Path
+import subprocess
+import tempfile
+import unittest
+from unittest.mock import patch
+
+SPEC = importlib.util.spec_from_file_location("libresign_deploy", Path(__file__).resolve().parents[1] / "setup.py")
+setup = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(setup)
+
+
+class InstallerTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory(prefix="libresign-installer-test-")
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.source = self.root / "source with spaces"
+        self.runtime = self.root / "private runtime"
+        self.config_path = self.root / "config.json"
+        for directory in (".git", "appinfo", "img", "lib/Migration", "deploy"):
+            (self.source / directory).mkdir(parents=True, exist_ok=True)
+        (self.source / "appinfo/info.xml").write_text('<info><dependencies><nextcloud min-version="36" max-version="36"/></dependencies></info>')
+        for version in ("19002Date20261023120000", "19002Date20261023180000"):
+            (self.source / f"lib/Migration/Version{version}.php").touch()
+        self.config = setup.default_config(self.source)
+        setup.private_json(self.config_path, self.config)
+        self.calls = []
+        self.provisions = []
+        self.app_password = "APP-PASSWORD-MUST-NOT-APPEAR-IN-LOGS"
+        self.sms_installed = False
+
+    def installer(self):
+        return setup.Installer(self.runtime, self.config_path, self.source)
+
+    def fake_run(self, args, *, data=None, capture=False, sensitive=False):
+        args = [str(arg) for arg in args]
+        self.calls.append((args, data))
+        if "app:install" in args and "twofactor_gateway" in args:
+            self.sms_installed = True
+        if args[0] == "git":
+            if "clone" in args:
+                (Path(args[-1]) / ".git").mkdir(parents=True)
+            if "rev-parse" in args:
+                return setup.NCDD_REVISION + "\n"
+        if "up" in args and "nextcloud" in args:
+            path = self.runtime / "volumes/nextcloud/config/config.php"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("<?php // private test fixture")
+        if "status" in args and "--output=json" in args:
+            return json.dumps({"installed": True, "maintenance": False, "needsDbUpgrade": False})
+        if args[-2:] == ["--services", "running"]:
+            raise AssertionError("Invalid compose ps option ordering")
+        if "ps" in args and "--services" in args:
+            return "nextcloud\nnginx\ncron\n"
+        if "provision.php" in " ".join(args):
+            payload = json.loads(data)
+            operation = payload["operation"]
+            if operation == "sms-status":
+                return json.dumps({"installed": self.sms_installed, "enabled": self.sms_installed})
+            if operation == "provision":
+                self.provisions.append(payload)
+                credentials = dict(payload["credentials"])
+                credentials["appPassword"] = credentials["appPassword"] or self.app_password
+                return json.dumps({"credentials": credentials, "settings": {"uid": credentials["uid"]}})
+            return json.dumps({"ok": True})
+        return ""
+
+    def install(self, **kwargs):
+        installer = self.installer()
+        with patch.object(installer, "preflight"), patch.object(setup, "run", side_effect=self.fake_run), contextlib.redirect_stdout(io.StringIO()) as output:
+            installer.install(**kwargs)
+        return output.getvalue()
+
+    def test_fresh_install_orders_initialization_before_mount_and_starts_cron(self):
+        output = self.install()
+        up = [args for args, _ in self.calls if "up" in args]
+        self.assertNotIn(str(self.source / "deploy/compose.source.yaml"), up[0])
+        self.assertIn(str(self.source / "deploy/compose.source.yaml"), up[1])
+        self.assertIn("cron", up[-1])
+        self.assertTrue((self.runtime / "installed.json").exists())
+        self.assertNotIn(self.app_password, output)
+        self.assertNotIn(self.provisions[0]["credentials"]["accountPassword"], output)
+        for path in [self.runtime / "admin.json", self.runtime / ".env", self.runtime / "credentials/provider-client.json",
+                     self.runtime / "integration.postman_environment.private.json"]:
+            self.assertEqual(0o600, path.stat().st_mode & 0o777)
+
+    def test_rerun_preserves_passwords_tokens_and_existing_client_policy(self):
+        self.install()
+        admin = (self.runtime / "admin.json").read_bytes()
+        credentials = (self.runtime / "credentials/provider-client.json").read_bytes()
+        self.calls.clear()
+        self.install()
+        self.assertEqual(admin, (self.runtime / "admin.json").read_bytes())
+        self.assertEqual(credentials, (self.runtime / "credentials/provider-client.json").read_bytes())
+        self.assertEqual(self.app_password, self.provisions[-1]["credentials"]["appPassword"])
+        self.assertFalse(self.provisions[-1]["updateClient"])
+        up = [args for args, _ in self.calls if "up" in args and "nextcloud" in args]
+        self.assertEqual(1, len(up))
+
+    def test_explicit_policy_update_is_forwarded(self):
+        self.install(update_client=True)
+        self.assertTrue(self.provisions[0]["updateClient"])
+
+    def test_mock_otp_policy_is_validated_and_forwarded_to_backend(self):
+        self.config["integration"]["policy"]["mockOtpEnabled"] = True
+        setup.private_json(self.config_path, self.config)
+        self.install(update_client=True)
+        self.assertIs(True, self.provisions[0]["policy"]["mockOtpEnabled"])
+        self.assertEqual("email", self.provisions[0]["policy"]["otpChannel"])
+        self.config["integration"]["policy"]["mockOtpEnabled"] = "true"
+        setup.private_json(self.config_path, self.config)
+        with self.assertRaisesRegex(setup.SetupError, "mockOtpEnabled"):
+            self.installer()
+
+    def test_defaults_and_example_use_real_email_otp(self):
+        policy = self.config["integration"]["policy"]
+        self.assertIs(False, policy["mockOtpEnabled"])
+        example = setup.read_json(setup.DEPLOY / "config.example.json")
+        self.assertEqual(policy, example["integration"]["policy"])
+
+    def test_sms_and_dual_channel_policies_are_forwarded_without_smtp_requirement(self):
+        for channel in ("sms", "email_sms"):
+            with self.subTest(channel=channel):
+                self.config["integration"]["policy"].update(otpChannel=channel, otpGateway=" sms ")
+                setup.private_json(self.config_path, self.config)
+                self.install(update_client=True)
+                self.assertEqual(channel, self.provisions[-1]["policy"]["otpChannel"])
+                self.assertEqual("sms", self.provisions[-1]["policy"]["otpGateway"])
+                self.assertIsNone(self.provisions[-1]["smtp"])
+
+    def test_sms_provider_configuration_can_be_deferred(self):
+        for channel in ("sms", "email_sms"):
+            for gateway in (None, "", "   "):
+                with self.subTest(channel=channel, gateway=gateway):
+                    self.config["integration"]["policy"].update(otpChannel=channel)
+                    self.config["integration"]["policy"].pop("otpGateway", None)
+                    if gateway is not None:
+                        self.config["integration"]["policy"]["otpGateway"] = gateway
+                    setup.private_json(self.config_path, self.config)
+                    installer = self.installer()
+                    self.assertEqual(channel, installer.policy()["otpChannel"])
+        self.assertEqual([], self.calls)
+        self.assertFalse(self.runtime.exists())
+
+    def test_sms_app_is_optional_for_email(self):
+        self.install()
+        self.assertFalse(self.sms_installed)
+        self.install(install_sms_app=True)
+        self.assertTrue(self.sms_installed)
+        self.assertEqual("email", self.provisions[-1]["policy"]["otpChannel"])
+
+    def test_sms_channel_attempts_app_install_without_provider_details(self):
+        self.config["integration"]["policy"]["otpChannel"] = "sms"
+        setup.private_json(self.config_path, self.config)
+        self.install()
+        self.assertTrue(self.sms_installed)
+        self.assertNotIn("otpGateway", self.provisions[-1]["policy"])
+
+    def test_optional_sms_app_failure_does_not_block_core_installation(self):
+        installer = self.installer()
+        original_run = self.fake_run
+        def unavailable_app(args, **kwargs):
+            if "app:install" in args and "twofactor_gateway" in args:
+                raise setup.SetupError("No compatible release")
+            return original_run(args, **kwargs)
+        with patch.object(installer, "preflight"), patch.object(setup, "run", side_effect=unavailable_app), contextlib.redirect_stdout(io.StringIO()) as output:
+            installer.install(install_sms_app=True)
+        self.assertTrue((self.runtime / "installed.json").exists())
+        self.assertEqual("installation_pending", setup.read_json(self.runtime / "sms-app.json")["status"])
+        self.assertIn("Core setup continues", output.getvalue())
+
+    def test_enabled_sms_app_is_not_reinstalled(self):
+        self.sms_installed = True
+        self.install(install_sms_app=True)
+        self.assertFalse(any("app:install" in args for args, _ in self.calls))
+
+    def test_doctor_reports_pending_sms_without_failing_core_installation(self):
+        installer = self.installer()
+        original_run = self.fake_run
+        def pending_sms(args, **kwargs):
+            if "provision.php" in " ".join(map(str, args)) and json.loads(kwargs["data"])["operation"] == "http":
+                return json.dumps({"ok": True, "otpChannel": "sms", "mockOtpEnabled": False,
+                                   "sms": {"required": True, "ready": False, "status": "configuration_pending"}})
+            return original_run(args, **kwargs)
+        with patch.object(installer, "preflight"), patch.object(setup, "run", side_effect=pending_sms), contextlib.redirect_stdout(io.StringIO()) as output:
+            installer.install()
+        state = setup.read_json(self.runtime / "installed.json")
+        self.assertFalse(state["sms"]["ready"])
+        self.assertIn("SMS delivery is not ready", output.getvalue())
+
+    def test_invalid_channel_and_gateway_are_rejected(self):
+        self.config["integration"]["policy"]["otpChannel"] = "push"
+        setup.private_json(self.config_path, self.config)
+        with self.assertRaisesRegex(setup.SetupError, "otpChannel"):
+            self.installer()
+        self.config["integration"]["policy"]["otpChannel"] = "email"
+        for gateway in ("sms\n", "sms\x00", "x" * 129, 123):
+            with self.subTest(gateway=gateway):
+                self.config["integration"]["policy"]["otpGateway"] = gateway
+                setup.private_json(self.config_path, self.config)
+                with self.assertRaisesRegex(setup.SetupError, "otpGateway"):
+                    self.installer()
+
+    def test_missing_mock_flag_in_old_configuration_stays_omitted_in_patch(self):
+        self.config["integration"]["policy"].pop("mockOtpEnabled")
+        setup.private_json(self.config_path, self.config)
+        self.install(update_client=True)
+        self.assertNotIn("mockOtpEnabled", self.provisions[-1]["policy"])
+
+    def test_email_configuration_does_not_require_sms_gateway(self):
+        self.install()
+        self.assertNotIn("otpGateway", self.provisions[-1]["policy"])
+
+    def test_runtime_identity_change_is_rejected_before_other_mutations(self):
+        self.install()
+        self.config["projectName"] = "different-project"
+        setup.private_json(self.config_path, self.config)
+        self.calls.clear()
+        with self.assertRaisesRegex(setup.SetupError, "identity changed"):
+            self.install()
+        self.assertEqual([], self.calls)
+
+    def test_unmanaged_runtime_is_never_adopted(self):
+        path = self.runtime / "volumes/nextcloud/config/config.php"
+        path.parent.mkdir(parents=True)
+        path.write_text("original configuration")
+        with self.assertRaisesRegex(setup.SetupError, "Unmanaged"):
+            self.install()
+        self.assertEqual("original configuration", path.read_text())
+
+    def test_interrupted_install_resumes_saved_account_password(self):
+        installer = self.installer()
+        original_run = self.fake_run
+        def fail_provision(args, **kwargs):
+            if "provision.php" in " ".join(map(str, args)) and json.loads(kwargs["data"])["operation"] == "provision":
+                raise setup.SetupError("simulated interruption")
+            return original_run(args, **kwargs)
+        with patch.object(installer, "preflight"), patch.object(setup, "run", side_effect=fail_provision), contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaisesRegex(setup.SetupError, "interruption"):
+                installer.install()
+        path = self.runtime / "credentials/provider-client.json"
+        saved = setup.read_json(path)
+        self.assertIsNone(saved["appPassword"])
+        self.assertFalse((self.runtime / "installed.json").exists())
+        self.install()
+        self.assertEqual(saved["accountPassword"], self.provisions[-1]["credentials"]["accountPassword"])
+
+    def test_missing_build_artifacts_reject_skip_build(self):
+        with self.assertRaisesRegex(setup.SetupError, "skip-build"):
+            self.install(skip_build=True)
+        self.assertFalse(self.provisions)
+
+    def test_failed_doctor_never_marks_success(self):
+        installer = self.installer()
+        with patch.object(installer, "preflight"), patch.object(setup, "run", side_effect=self.fake_run), patch.object(installer, "doctor", side_effect=setup.SetupError("HTTP failed")), contextlib.redirect_stdout(io.StringIO()) as output:
+            with self.assertRaisesRegex(setup.SetupError, "HTTP failed"):
+                installer.install()
+        self.assertFalse((self.runtime / "installed.json").exists())
+        self.assertNotIn("Ready:", output.getvalue())
+
+    def test_helper_failure_message_is_actionable(self):
+        with patch.object(setup, "run", return_value='{"failure":"Account already exists; supply passwordFile."}'):
+            with self.assertRaisesRegex(setup.SetupError, "supply passwordFile"):
+                self.installer().helper("provision")
+
+    def test_private_file_permissions_are_tightened_on_replace(self):
+        path = self.root / "secret.json"
+        path.write_text("old")
+        path.chmod(0o644)
+        setup.private_json(path, {"password": "secret"})
+        self.assertEqual(0o600, path.stat().st_mode & 0o777)
+
+    def test_export_preserves_pdf_fixture_and_other_postman_variables(self):
+        template = self.source / "deploy/examples/libresign-public.postman_environment.json"
+        template.parent.mkdir()
+        template.write_text(json.dumps({"values": [{"key": "samplePdfBase64", "value": "PDF-FIXTURE"},
+                                                  {"key": "apiUser", "value": "old-user"},
+                                                  {"key": "registrationOtp", "value": ""}]}))
+        self.installer().export_environment({"uid": "provider-client", "appPassword": "private-token"})
+        environment = setup.read_json(self.runtime / "integration.postman_environment.private.json")
+        values = {item["key"]: item["value"] for item in environment["values"]}
+        self.assertEqual("PDF-FIXTURE", values["samplePdfBase64"])
+        self.assertEqual("provider-client", values["apiUser"])
+        self.assertEqual("private-token", values["apiAppPassword"])
+        self.assertEqual("", values["registrationOtp"])
+
+    def test_runtime_under_web_served_checkout_is_rejected(self):
+        with self.assertRaisesRegex(setup.SetupError, "outside the source"):
+            setup.Installer(self.source / ".runtime", self.config_path, self.source)
+
+    def test_bad_url_and_admin_integration_are_rejected(self):
+        for public_url in ("https://user:password@example.com", "https://example.com/path", "http://example.com", "https://example.com:0"):
+            with self.subTest(public_url=public_url):
+                config = setup.default_config(self.source)
+                config["publicUrl"] = public_url
+                setup.private_json(self.config_path, config)
+                with self.assertRaises(setup.SetupError):
+                    self.installer()
+        self.config["integration"]["uid"] = "admin"
+        setup.private_json(self.config_path, self.config)
+        with self.assertRaisesRegex(setup.SetupError, "different"):
+            self.installer()
+
+    def test_secrets_are_not_shell_evaluated_or_printed_in_plan(self):
+        password = 'smtp-$(touch /tmp/never-run)-`id`-$TOKEN'
+        secret = self.root / "smtp.password"
+        secret.write_text(password)
+        secret.chmod(0o600)
+        self.config["smtp"] = {"host": "smtp.example.com", "port": 587, "secure": "tls", "auth": True,
+                               "username": "test", "passwordFile": str(secret), "fromAddress": "sign", "domain": "example.com"}
+        setup.private_json(self.config_path, self.config)
+        self.install()
+        self.assertEqual(password, self.provisions[0]["smtp"]["password"])
+        self.assertTrue(all(password not in " ".join(args) for args, _ in self.calls))
+
+    def test_shell_help_with_install_deps_does_not_run_installer(self):
+        result = subprocess.run(["bash", str(setup.DEPLOY / "install.sh"), "--help", "--install-deps"], text=True, capture_output=True)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("usage:", result.stdout)
+
+    def test_disk_failure_prevents_prepare(self):
+        installer = self.installer()
+        with patch.object(setup.shutil, "which", return_value="/bin/tool"), patch.object(setup.shutil, "disk_usage", return_value=type("Disk", (), {"free": 1024})()), patch.object(setup, "run", return_value="/tmp"):
+            with self.assertRaisesRegex(setup.SetupError, "6 GiB"):
+                installer.preflight()
+        self.assertFalse(self.runtime.exists())
+
+
+if __name__ == "__main__":
+    unittest.main()
