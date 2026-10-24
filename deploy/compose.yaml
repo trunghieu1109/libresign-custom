@@ -12,7 +12,9 @@ services:
       - ${SOURCE_RUNTIME_DIR}/cache/composer:/var/www/.composer
       - ${SOURCE_RUNTIME_DIR}/cache/npm:/var/www/.npm
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:57e4255cc971b1c8d6f8a6ca283ac01bc3ecdd914273ef6bfaede87aaecd6541
+  nginx:
+    image: ghcr.io/librecodecoop/nextcloud-dev-nginx@sha256:ecd9dc482b6c436e1757fd03c2e632dd32e5feee98678bf7a67bbe02e7f21b4b
   cron:
     image: ${SOURCE_PHP_IMAGE}
     user: www-data

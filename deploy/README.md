@@ -74,8 +74,8 @@ Sửa các field tương ứng trong file JSON đầy đủ, không thay cả fi
 
 ## 3. Bộ cài thực hiện những gì?
 
-1. Kiểm tra Docker/Compose, source đúng nhánh Nextcloud 36, Git submodule và dung lượng trống ít nhất 6 GiB tại source/Docker data root đọc được. Nên chuẩn bị nhiều dung lượng hơn cho image, npm và PDF; 6 GiB là ngưỡng chặn, không phải sizing production.
-2. Lấy NCDD và Nextcloud đúng revision đã pin; khởi tạo Nextcloud trước khi mount source để startup không đổi ownership file code.
+1. Kiểm tra Docker/Compose, source đúng nhánh Nextcloud 36, Git submodule và dung lượng trống ít nhất 6 GiB tại source, nơi lưu runtime và Docker data root đọc được. Khi runtime chưa tồn tại, kiểm tra thư mục cha gần nhất đã có. Nên chuẩn bị nhiều dung lượng hơn cho image, npm và PDF; 6 GiB là ngưỡng chặn, không phải sizing production.
+2. Lấy NCDD và Nextcloud đúng revision đã pin, dùng các image PHP/nginx/Redis đã pin digest; khởi tạo Nextcloud trước khi mount source để startup không đổi ownership file code.
 3. Tạo mật khẩu admin ngẫu nhiên; cấp ACL cho UID 33 ở thư mục build, không recursively chown source.
 4. Cài PHP runtime dependencies từ `composer.lock`; `npm ci` từ lockfile rồi build frontend. Không cài bộ test PHP trong bước này.
 5. Bật LibreSign, chỉ chạy các migration provider còn thiếu, cài Java/JSignPdf/PDFtk, tạo CA nếu chưa có metadata/file CA.
@@ -88,6 +88,8 @@ Redis và Mailpit thuộc topology NCDD. Mailpit mặc định giữ thư OTP đ
 ## 4. Tài khoản và quyền API
 
 Mặc định: admin UID `admin`, integration UID `provider-client`, năm scope cấp/đọc/thu hồi chứng thư và đọc/ký. Đổi `integration.uid` và `integration.policy.trustedSources` đồng bộ khi dùng UID khác. Giới hạn `scopes` theo quyền thực tế của từng đối tác.
+
+Máy cài mới không sao chép `provider-demo`, App Password hoặc chế độ mock từ máy đang thử. Mặc định bộ cài tạo `provider-client` với `mockOtpEnabled=false`; nếu muốn thử bằng mã `123456` như máy hiện tại, chủ động bật mock theo mục 5 và bàn giao environment private của máy mới.
 
 Các file private trong runtime, quyền `0600`:
 
@@ -196,6 +198,8 @@ sudo bash deploy/runtime.sh --runtime-dir /opt/libresign-runtime up
 ```
 
 `stop/up` giữ dữ liệu. Chạy lại đúng lệnh `install` để tiếp tục một lần cài lỗi. Source/runtime path, project name và admin UID phải giữ ổn định; script từ chối đổi identity hoặc tự nhận dữ liệu Nextcloud không thuộc bộ cài. Script không cập nhật nhánh source bằng `git pull` và không dùng các lệnh xóa volume.
+
+Các biến Compose do bộ cài ghi vào runtime `.env` được dùng theo file đó; biến cùng tên đã export trong shell không ghi đè chúng. Muốn đổi URL, cổng hoặc thông tin triển khai, sửa `install.json` rồi chạy lại bộ cài. Quy tắc này tránh dùng nhầm cấu hình của một project khác trên cùng máy; kết nối Docker và các biến host không thuộc cấu hình runtime vẫn được giữ. Cơ chế gốc của Compose ưu tiên biến shell hơn `--env-file`, xem [tài liệu Docker](https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/#ways-to-set-variables-with-interpolation).
 
 Một bước cài thất bại có thể để cron dừng hoặc ứng dụng chưa cấu hình xong. Sau khi xử lý lỗi, chạy lại bộ cài và doctor; không coi chỉ có container running là cài thành công. Không chạy song song hai lần cài trên cùng runtime.
 

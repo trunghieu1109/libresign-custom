@@ -10,7 +10,7 @@ Ngày kiểm tra: **24/10/2026**. Phạm vi là bộ cài của fork LibreSign 1
 | Kiểm tra | Kết quả |
 |---|---|
 | Bash syntax của entrypoint, runtime helper, host dependencies và wrapper ngoài repo | Đạt |
-| Python orchestration regression | **28 tests đạt**: các trường hợp cài mới/chạy lại, secret/identity, OTP email/SMS/hai kênh, mock, app SMS tùy chọn và cấu hình provider để sau |
+| Python orchestration regression | **30 tests đạt**: các trường hợp cài mới/chạy lại, secret/identity, OTP email/SMS/hai kênh, mock, app SMS tùy chọn, dung lượng nơi lưu runtime và biến host trùng cấu hình Compose |
 | PHP syntax và tương thích với Nextcloud đang dùng | Đạt |
 | PHP provisioning trên SQLite snapshot/CA/datadir riêng | **54 assertions đạt**, không ghi vào database hoặc CA đang phục vụ người dùng |
 | Compose render bằng Docker Compose thật | Đạt cho HTTPS local và HTTP overlay; kiểm tra mounts, UID cron và literal `$`/quote/space trong cấu hình thử |
@@ -31,6 +31,13 @@ Doctor đã thực hiện request qua nginx/PHP-FPM với App Password: `/capabi
 - 54 assertions PHP trên fixture riêng kiểm tra bật/tắt mock, giữ token/client khác, lưu account/policy SMS ngay cả khi provider chưa cấu hình, ghi rõ SMS chưa ready và từ chối tên gateway sai định dạng. Các kiểm tra CA/migration/SMTP trước đó tiếp tục đạt.
 - Gọi GET chỉ đọc bằng credential hiện có qua nginx/PHP-FPM: ba API danh mục, metadata `otpChannel`/`supportedOtpChannels` và anonymous rejection đều đạt. Runtime thử hiện có trả kênh email, mock đang bật theo cấu hình của nó; lượt kiểm tra không đổi policy đó.
 - Không gửi SMS và không cài app vào runtime đang dùng trong lượt này. Nhánh cài app/tương thích bị lỗi được kiểm thử bằng mock; provider SMS cụ thể được để cấu hình sau theo yêu cầu. Trước khi dùng SMS thật vẫn cần thử giao mã.
+
+## Lượt rà soát lại bộ cài
+
+- Tái hiện và sửa hai trường hợp: nơi lưu runtime thiếu dung lượng dù source/Docker còn chỗ; biến đã export trên host ghi đè thông số trong runtime `.env`. Thêm hai regression tests, tổng **30 tests đạt**. Kiểm tra Bash syntax và `git diff --check` đạt.
+- Pin thêm image nginx và Redis bằng digest của image đã có trên máy, giữ phiên bản đang dùng. Render bằng Docker Compose thật đạt cho HTTPS local và HTTP IP:port, kể cả khi host export sai đường dẫn source/runtime, UID, cổng, hostname và mật khẩu bootstrap. Đối chiếu mount, credential, cron user, cổng publish và image digest; không tạo container hoặc in secret trong bước render.
+- PHP helper qua kiểm tra cú pháp. Helper kiểm tra CA/tools, bảng/job và ba API danh mục qua nginx nội bộ bằng credential hiện có đều đạt; anonymous bị từ chối. Policy đang dùng vẫn là email + mock OTP; không thay CA, tài khoản hoặc policy của máy hiện tại. OpenAPI public vẫn khớp controller/Postman, đủ 24 thao tác.
+- Lượt rà soát này không chạy lại toàn bộ cài sạch hoặc cài package host. Kết quả cài sạch/54 assertions PHP ở trên thuộc các lượt kiểm chứng trước; giới hạn Ubuntu trắng và đường mạng/HTTPS công khai vẫn giữ nguyên.
 
 ## Giới hạn
 

@@ -40,7 +40,7 @@ class InstallerTests(unittest.TestCase):
     def installer(self):
         return setup.Installer(self.runtime, self.config_path, self.source)
 
-    def fake_run(self, args, *, data=None, capture=False, sensitive=False):
+    def fake_run(self, args, *, data=None, capture=False, sensitive=False, env=None):
         args = [str(arg) for arg in args]
         self.calls.append((args, data))
         if "app:install" in args and "twofactor_gateway" in args:
@@ -267,9 +267,10 @@ class InstallerTests(unittest.TestCase):
         self.assertNotIn("Ready:", output.getvalue())
 
     def test_helper_failure_message_is_actionable(self):
-        with patch.object(setup, "run", return_value='{"failure":"Account already exists; supply passwordFile."}'):
+        installer = self.installer()
+        with patch.object(installer, "compose", return_value='{"failure":"Account already exists; supply passwordFile."}'):
             with self.assertRaisesRegex(setup.SetupError, "supply passwordFile"):
-                self.installer().helper("provision")
+                installer.helper("provision")
 
     def test_private_file_permissions_are_tightened_on_replace(self):
         path = self.root / "secret.json"
@@ -332,6 +333,31 @@ class InstallerTests(unittest.TestCase):
             with self.assertRaisesRegex(setup.SetupError, "6 GiB"):
                 installer.preflight()
         self.assertFalse(self.runtime.exists())
+
+    def test_low_space_on_separate_runtime_filesystem_prevents_installation(self):
+        installer = self.installer()
+        def disk_usage(path):
+            free = 1024 if Path(path) == self.runtime.parent else 20 * 1024**3
+            return type("Disk", (), {"free": free})()
+        with patch.object(setup.shutil, "which", return_value="/bin/tool"), \
+                patch.object(setup.shutil, "disk_usage", side_effect=disk_usage), \
+                patch.object(setup, "run", return_value="/tmp"):
+            with self.assertRaisesRegex(setup.SetupError, "6 GiB"):
+                installer.preflight()
+        self.assertFalse(self.runtime.exists())
+
+    def test_exported_host_values_cannot_override_saved_runtime_configuration(self):
+        self.install()
+        overrides = {"SOURCE_RUNTIME_DIR": "/wrong-runtime", "LIBRESIGN_SOURCE_PATH": "/wrong-source",
+                     "NEXTCLOUD_ADMIN_PASSWORD": "wrong-password", "SOURCE_PUBLIC_HOST": "wrong.example",
+                     "HOST_UID": "1001", "DEPLOY_HTTP_PORT": "9999", "DEPLOY_TEST_KEEP": "preserved"}
+        with patch.dict(os.environ, overrides), patch.object(setup, "run", return_value="") as runner:
+            self.installer().compose("config", "--quiet")
+        environment = runner.call_args.kwargs.get("env")
+        self.assertTrue(isinstance(environment, dict), "Compose must receive an explicit environment.")
+        for key in overrides.keys() - {"DEPLOY_TEST_KEEP"}:
+            self.assertTrue(key not in environment, f"Exported {key} overrides the saved runtime.")
+        self.assertEqual("preserved", environment["DEPLOY_TEST_KEEP"])
 
 
 if __name__ == "__main__":

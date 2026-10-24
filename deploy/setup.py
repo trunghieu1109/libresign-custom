@@ -177,10 +177,10 @@ def load_config(path):
     return config
 
 
-def run(args, *, data=None, capture=False, sensitive=False):
+def run(args, *, data=None, capture=False, sensitive=False, env=None):
     result = subprocess.run([str(a) for a in args], input=data, text=True,
                             stdout=subprocess.PIPE if capture or sensitive else None,
-                            stderr=subprocess.PIPE if sensitive else None, check=False)
+                            stderr=subprocess.PIPE if sensitive else None, env=env, check=False)
     if result.returncode:
         # Input/output can contain passwords. Never reproduce sensitive helper output.
         raise SetupError(f"Command failed ({result.returncode}): {Path(str(args[0])).name}" + ("; sensitive output withheld." if sensitive else "."))
@@ -205,7 +205,13 @@ class Installer:
             command += ["-f", self.deploy / "compose.source.yaml"]
             if self.config["publishHttp"]:
                 command += ["-f", self.deploy / "compose.http.yaml"]
-        return run(command + list(args), **kwargs)
+        # Compose gives exported shell variables precedence over --env-file.
+        # Keep this runtime's saved settings authoritative while retaining PATH,
+        # Docker connection options and unrelated host environment variables.
+        environment = os.environ.copy()
+        for key in re.findall(r"^([A-Z][A-Z0-9_]*)=", (self.runtime / ".env").read_text(encoding="utf-8"), re.MULTILINE):
+            environment.pop(key, None)
+        return run(command + list(args), env=environment, **kwargs)
 
     def occ(self, *args, **kwargs):
         return self.compose("exec", "-T", "--user", "www-data", "nextcloud", "php", "occ", *args, **kwargs)
@@ -246,9 +252,13 @@ class Installer:
         run(["docker", "compose", "version"], capture=True)
         run(["docker", "info"], capture=True, sensitive=True)
         if disk:
-            # Docker's image store may be on a separate filesystem; inspect both.
+            # Source, runtime data and Docker images can live on separate disks.
+            # A fresh runtime may not exist yet; inspect its nearest existing parent.
             docker_root = run(["docker", "info", "--format", "{{.DockerRootDir}}"], capture=True).strip()
-            for path in (self.source, Path(docker_root)):
+            runtime_parent = self.runtime
+            while not runtime_parent.exists():
+                runtime_parent = runtime_parent.parent
+            for path in (self.source, runtime_parent, Path(docker_root)):
                 if path.exists() and shutil.disk_usage(path).free < 6 * 1024**3:
                     raise SetupError(f"Less than 6 GiB free at {path}; provide more disk space before installation.")
 
