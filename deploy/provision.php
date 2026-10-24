@@ -135,6 +135,11 @@ try {
 		if (!\OCP\Server::get(\OCP\BackgroundJob\IJobList::class)->has(\OCA\Libresign\BackgroundJob\ProviderWorkflowJob::class, null)) {
 			$errors[] = 'ProviderWorkflowJob';
 		}
+		if (!class_exists(\OCA\Libresign\Controller\ProviderManagementController::class)
+			|| !class_exists(\OCA\Libresign\Service\Provider\ProviderManagementService::class)
+			|| !method_exists(\OCA\Libresign\Service\Provider\ProviderStateStore::class, 'listing')) {
+			$errors[] = 'ProviderManagement';
+		}
 		$result = ['ok' => count($checks) > 0 && !$errors, 'errors' => $errors];
 	} elseif ($operation === 'provision') {
 		$credentials = $input['credentials'];
@@ -225,14 +230,14 @@ try {
 		}
 		validateDeployOtpPolicy($policy);
 		$authorization = 'Authorization: Basic ' . base64_encode($input['uid'] . ':' . $input['appPassword']);
-		$request = static function (string $path, bool $authenticated) use ($host, $authorization): array {
+		$request = static function (string $path, bool $authenticated, bool $public = true) use ($host, $authorization): array {
 			$headers = ['Host: ' . $host, 'Accept: application/json', 'OCS-APIRequest: true'];
 			if ($authenticated) {
 				$headers[] = $authorization;
 			}
 			$context = stream_context_create(['http' => ['method' => 'GET', 'header' => implode("\r\n", $headers),
 				'ignore_errors' => true, 'follow_location' => 0, 'timeout' => 30]]);
-			$body = @file_get_contents('http://nginx/index.php/apps/libresign/api/v1/public' . $path, false, $context);
+			$body = @file_get_contents('http://nginx/index.php/apps/libresign' . ($public ? '/api/v1/public' : '') . $path, false, $context);
 			preg_match('/^HTTP\/\S+ ([0-9]{3})/', $http_response_header[0] ?? '', $match);
 			return [(int)($match[1] ?? 0), $body === false ? null : json_decode($body, true)];
 		};
@@ -248,8 +253,13 @@ try {
 			}
 		}
 		[$anonymousStatus, $anonymous] = $request('/capabilities', false);
-		$result = ['ok' => $passed && $anonymousStatus === 401 && ($anonymous['status'] ?? null) === false,
+		[$managementClientStatus] = $request('/api/v1/management/clients', true, false);
+		[$managementAnonymousStatus] = $request('/api/v1/management/clients', false, false);
+		$result = ['ok' => $passed && $anonymousStatus === 401 && ($anonymous['status'] ?? null) === false
+			&& $managementClientStatus === 403 && $managementAnonymousStatus === 401,
+			'managementClientStatus' => $managementClientStatus, 'managementAnonymousStatus' => $managementAnonymousStatus,
 			'otpChannel' => $policy['otpChannel'] ?? null, 'mockOtpEnabled' => ($policy['mockOtpEnabled'] ?? false) === true,
+			'mockRegistrationEnabled' => ($policy['mockRegistrationEnabled'] ?? false) === true,
 			'sms' => deploySmsReadiness($policy)];
 	} else {
 		throw new DeployFailure('Unknown administrative operation.');

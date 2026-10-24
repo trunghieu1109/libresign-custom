@@ -7,6 +7,8 @@ Bộ cài nằm trọn trong repo source. Khi push `libresign-custom`, hãy comm
 
 Sau khi dựng server, gửi [hướng dẫn dành cho bên tích hợp](QUICKSTART.md) cùng collection/environment trong `examples/` và bàn giao credential riêng. Hướng dẫn có thông tin máy thử hiện tại; khi bàn giao máy khác, cập nhật URL và tài khoản tương ứng.
 
+Source hiện có [giao diện quản lý chứng thư và ký PDF](MANAGEMENT.md) cho admin, gồm form nhập hồ sơ thử khi được bật. Cài mới tự build giao diện; cập nhật từ bản chưa có màn quản lý phải chạy `install` đầy đủ, bỏ `--skip-build`. Không có dependency host, cổng hoặc migration mới cho màn quản lý này.
+
 Phạm vi: dựng mới môi trường **phát triển/UAT** trên Ubuntu Linux hoặc WSL2, dùng LibreSign 16-dev / Nextcloud 36 dev và SQLite. Bộ cài tái sử dụng NCDD pin theo checkout, không biến bản dev thành bản production. PHP/Composer/Node/npm chạy trong container. Linux cần filesystem hỗ trợ POSIX ACL; với WSL, clone trong filesystem Linux, ví dụ `/home/...`, thay vì `/mnt/c/...`.
 
 ## 1. Cài nhanh trên máy mới
@@ -115,6 +117,7 @@ Các file private trong runtime, quyền `0600`:
 |---|---|
 | `admin.json` | UID/mật khẩu admin được tạo lần đầu |
 | `.env` | Cấu hình Compose và mật khẩu bootstrap admin |
+| `build.json` | Hash đầu vào frontend/lockfile của lần build thành công để kiểm tra khi dùng `--skip-build` |
 | `credentials/UID.json` | Mật khẩu tài khoản máy, App Password, callback secret nếu có |
 | `integration.postman_environment.private.json` | Mẫu Postman đủ các biến, đã điền base URL/UID/App Password |
 | `client-settings.json` | Policy không chứa callback secret/public key assertion |
@@ -130,7 +133,21 @@ Khi chạy lại, script giữ policy đã tồn tại, giữ các client khác,
 sudo bash deploy/install.sh install --runtime-dir /opt/libresign-runtime --skip-build --update-client
 ```
 
-`--update-client` merge những key được khai báo, giữ các key không khai báo. `--skip-build` chỉ dành cho dependencies/assets đã có; không dùng sau khi đổi lockfile/frontend. Nếu App Password bị revoke, doctor báo lỗi; cung cấp App Password mới qua `appPasswordFile`, hoặc cấp lại có chủ đích. Script không tự xoay token trên mỗi lần chạy.
+`--update-client` merge những key được khai báo, giữ các key không khai báo. `--skip-build` yêu cầu các asset chính, Composer autoload và `build.json` còn khớp đầu vào source/lockfile. Source frontend đổi hoặc runtime cũ chưa có biên nhận build sẽ bị từ chối trước khi khởi động lại container; chạy một lần không có `--skip-build`. Biên nhận không thay thế kiểm thử trình duyệt. Nếu App Password bị revoke, doctor báo lỗi; cung cấp App Password mới qua `appPasswordFile`, hoặc cấp lại có chủ đích. Script không tự xoay token trên mỗi lần chạy.
+
+### Đăng nhập màn quản lý sau cài
+
+Đăng nhập bằng `adminUser` và mật khẩu bootstrap trong `admin.json`, mở LibreSign → **Chứng thư & ký số**, hoặc truy cập:
+
+```text
+PUBLIC_URL/index.php/apps/libresign/f/provider-management
+```
+
+Chọn UID `provider-client` mặc định của máy mới. Giao diện dùng phiên đăng nhập admin và CSRF token, không nhập App Password. Tài khoản máy thường chỉ dùng API public; không cấp admin cho tài khoản đó để mở giao diện. Màn hình quản lý dữ liệu theo UID, chưa có chức năng tạo account hay sửa policy; tiếp tục dùng bộ cài/CLI cho việc đó.
+
+Để thử form **Nhập hồ sơ thử nghiệm**, thêm `mockRegistrationEnabled: true` vào `integration.policy` trong `install.json`, giữ scope `certificates:write` và `trustedSources` chứa đúng UID. Sau đó chạy `install --update-client`; chỉ thêm `--skip-build` nếu source frontend/lockfile vẫn khớp lần build trước. `mockRegistrationEnabled` cho phép cả form nhập tay và QR mock, không tự bật OTP mock. Nếu muốn nhập `123456`, đặt riêng `mockOtpEnabled: true`; mặc định máy mới vẫn đối chiếu mã OTP thật.
+
+Không cần bật nhập tay để dùng API `identity/info` của adapter. Thông tin nhập tay phải là dữ liệu thử; khi chuyển sang vận hành thật, đặt rõ hai cờ mock về `false` và áp dụng `--update-client`. Bỏ key khỏi JSON giữ policy cũ, không tắt mock. Hướng dẫn đầy đủ tại [MANAGEMENT.md](MANAGEMENT.md).
 
 ## 5. SMTP thật và tùy chọn adapter
 
@@ -223,7 +240,17 @@ Một bước cài thất bại có thể để cron dừng hoặc ứng dụng 
 
 ### Sau khi cập nhật code của fork
 
-Giữ nguyên thư mục source, runtime, `projectName`, `adminUser` và credential đã có. Khi chỉ thay PHP/policy như bản OTP mới, các lệnh dưới áp dụng code và policy được khai báo, giữ CA/token và chỉ chạy migration còn thiếu:
+Giữ nguyên thư mục source, runtime, `projectName`, `adminUser` và credential đã có. Bản thêm màn quản lý/form nhập tay có thay đổi frontend; từ thư mục source, chạy đầy đủ:
+
+```bash
+sudo bash deploy/install.sh plan --runtime-dir /opt/libresign-runtime
+sudo bash deploy/install.sh install --runtime-dir /opt/libresign-runtime
+sudo bash deploy/install.sh doctor --runtime-dir /opt/libresign-runtime
+```
+
+Luồng này cài dependencies từ lockfile, build UI và giữ policy/CA/token hiện có. Không thêm migration cho màn quản lý; hai migration provider đã có chỉ chạy nếu còn thiếu. Sau khi cài, đăng nhập admin và tải lại trang bằng Ctrl + F5. Nếu muốn áp dụng policy đã sửa trong `install.json`, thêm `--update-client`; xem lại toàn bộ key policy trước khi áp dụng.
+
+Khi chỉ thay PHP/policy và runtime đã có `build.json` khớp, các lệnh dưới bỏ bước build:
 
 ```bash
 sudo bash deploy/install.sh plan --runtime-dir /opt/libresign-runtime --update-client
@@ -233,17 +260,16 @@ sudo bash deploy/install.sh doctor --runtime-dir /opt/libresign-runtime
 
 Sửa `install.json` trước, ví dụ chọn `otpChannel=email`, `mockOtpEnabled=false` để dùng mã thật. `--update-client` áp dụng mọi key policy có khai báo trong file; xem lại cả scopes và các tùy chọn khác, không chỉ riêng OTP. Khi giữ policy hiện có, bỏ `--update-client`. Nếu thay frontend/lockfile, bỏ `--skip-build` để build lại. Bộ cài không tự `git pull`; checkout đúng code đã review trước khi chạy.
 
-Nếu môi trường cũ được tạo bằng **`scripts/source-dev.sh`**, tiếp tục dùng wrapper đó từ thư mục Docker bên ngoài source; bộ cài mới không tiếp quản database cũ. Đợt OTP mới không thêm migration so với hai migration provider đã có:
+Nếu môi trường cũ được tạo bằng **`scripts/source-dev.sh`**, tiếp tục dùng wrapper đó từ thư mục Docker bên ngoài source; bộ cài mới không tiếp quản database cũ. Với bản có giao diện quản lý, build bằng user ứng dụng rồi khởi động lại PHP-FPM:
 
 ```bash
+bash scripts/source-dev.sh nat build
 bash scripts/source-dev.sh nat restart nextcloud
 bash scripts/source-dev.sh nat occ libresign:provider:configure provider-demo
-bash scripts/source-dev.sh nat occ libresign:provider:configure provider-demo \
-  --otp-channel=email --mock-otp=false
 bash scripts/source-dev.sh nat occ libresign:configure:check
 ```
 
-Lệnh `--mock-otp=false` là lựa chọn áp dụng mã thật; đổi thành `true` chỉ khi chủ động thử tích hợp. Với môi trường local/tunnel của wrapper cũ, bỏ `nat`. Không chạy lại tạo CA để áp dụng thay đổi OTP.
+Các lệnh này không đổi chế độ OTP hoặc bật nhập hồ sơ thử. Muốn bật/tắt mock có chủ đích, xem [cấu hình màn quản lý](MANAGEMENT.md#bật-form-nhập-hồ-sơ-thử). Với môi trường local/tunnel của wrapper cũ, bỏ `nat`. Không chạy lại tạo CA để áp dụng giao diện/OTP.
 
 Sao lưu khi đã dừng các tiến trình ghi: cả runtime (SQLite/config/data/appdata/CA/khóa/private credentials), source commit và submodule revision tương ứng. Mã nguồn Git không chứa các dữ liệu đó. Restore cần giữ đồng bộ database với file CA/private appdata và `secret` của Nextcloud. Bộ cài này không tự restore hay tạo lại CA khi thiếu dữ liệu.
 

@@ -461,6 +461,32 @@ class Installer:
             print("SMS app installation is pending (download/compatibility/enablement). Core setup continues; retry app:install twofactor_gateway when needed.")
         private_json(self.runtime / "sms-app.json", status)
 
+    def build_fingerprint(self):
+        """Hash build inputs, including uncommitted UI changes, without hashing generated assets."""
+        files = {self.source / name for name in ("composer.json", "composer.lock", "package.json", "package-lock.json", "appinfo/info.xml")}
+        for pattern in ("vite.config.*", "tsconfig*.json", "postcss.config.*", "tailwind.config.*"):
+            files.update(self.source.glob(pattern))
+        # img/ also receives generated Vite assets; do not hash that output tree.
+        for directory in ("src", "l10n"):
+            files.update(path for path in (self.source / directory).rglob("*")
+                         if path.is_file() and "tests" not in path.relative_to(self.source).parts
+                         and not re.search(r"\.(?:spec|test)\.[^.]+$", path.name))
+        fingerprint = hashlib.sha256()
+        for path in sorted(files):
+            if path.is_file():
+                fingerprint.update(path.relative_to(self.source).as_posix().encode() + b"\0")
+                fingerprint.update(hashlib.sha256(path.read_bytes()).digest())
+        return fingerprint.hexdigest()
+
+    def check_build(self):
+        for relative in ("vendor/autoload.php", "js/libresign-main.mjs", "css/libresign-main.css"):
+            path = self.source / relative
+            if not path.is_file() or path.stat().st_size == 0:
+                raise SetupError(f"Build artifact {relative} is missing or empty; run install without --skip-build.")
+        receipt = self.runtime / "build.json"
+        if not receipt.exists() or read_json(receipt).get("inputHash") != self.build_fingerprint():
+            raise SetupError("Build inputs changed or build.json is missing; run install without --skip-build to rebuild dependencies and frontend.")
+
     def install(self, skip_build=False, update_client=False, install_sms_app=False):
         self.preflight()
         # Validate referenced files before downloading or mutating runtime data.
@@ -469,6 +495,9 @@ class Installer:
         for setting in ("passwordFile", "appPasswordFile"):
             if integration.get(setting):
                 secret_file(integration[setting], self.config_path)
+        if skip_build:
+            # Fail before restarting containers or stopping cron when the UI is stale.
+            self.check_build()
         print("[1/7] Preparing pinned runtime and preserving credentials.", flush=True)
         self.prepare()
         self.check_ports()
@@ -482,16 +511,17 @@ class Installer:
         self.wait_ready(attached=True)
         self.compose("stop", "cron")
         if not skip_build:
+            inputs = self.build_fingerprint()
+            (self.runtime / "build.json").unlink(missing_ok=True)
             self.compose("exec", "-T", "--user", "www-data", "nextcloud", "bash", "-lc",
                          'set -e; cd /var/www/html/apps-extra/libresign; '
                          'git config --global --get-all safe.directory | grep -Fxq "$PWD" || git config --global --add safe.directory "$PWD"; '
                          'composer install --no-dev --no-scripts --no-interaction --prefer-dist --no-progress; '
                          'npm ci --no-audit --no-fund; npm run build')
-        else:
-            for relative in ("vendor/autoload.php", "js", "css"):
-                path = self.source / relative
-                if not path.exists() or (path.is_dir() and not any(path.iterdir())):
-                    raise SetupError(f"--skip-build requested but {relative} is missing or empty.")
+            if inputs != self.build_fingerprint():
+                raise SetupError("Build inputs changed while building; rerun install without --skip-build.")
+            private_json(self.runtime / "build.json", {"inputHash": inputs})
+        self.check_build()
         print("[4/7] Enabling app, applying provider migrations and installing signing tools.", flush=True)
         self.occ("app:enable", "libresign")
         # Custom migration IDs exceed the upstream app major. Apply only pending IDs;
@@ -520,7 +550,7 @@ class Installer:
         checks = self.doctor(credentials)
         private_json(self.runtime / "installed.json", {"publicUrl": self.config["publicUrl"], "uid": credentials["uid"],
                                                        "sms": (checks or {}).get("sms")})
-        print(f"Ready: {self.config['publicUrl']}\nAdmin credentials: {self.runtime / 'admin.json'}\nIntegration credentials: {credential_path}\nPrivate Postman environment: {self.runtime / 'integration.postman_environment.private.json'}")
+        print(f"Ready: {self.config['publicUrl']}\nManagement (admin login): {self.config['publicUrl']}/index.php/apps/libresign/f/provider-management\nAdmin credentials: {self.runtime / 'admin.json'}\nIntegration credentials: {credential_path}\nPrivate Postman environment: {self.runtime / 'integration.postman_environment.private.json'}")
 
     def export_environment(self, credentials):
         values = {"baseUrl": self.config["publicUrl"] + "/index.php/apps/libresign/api/v1/public",
@@ -538,6 +568,7 @@ class Installer:
     def doctor(self, credentials=None):
         if not (self.runtime / ".env").exists():
             raise SetupError("Runtime has not been installed.")
+        self.check_build()
         result = self.helper("check")
         if not result.get("ok"):
             raise SetupError("Signing validation failed: " + ", ".join(result.get("errors", [])))
@@ -551,10 +582,12 @@ class Installer:
         response = self.helper("http", uid=credentials["uid"], appPassword=credentials["appPassword"],
                                host=urlsplit(self.config["publicUrl"]).netloc)
         if not response.get("ok"):
-            raise SetupError("HTTP API smoke checks failed.")
-        print("PASS: signing tools/CA, provider tables/job, cron, authenticated API and anonymous rejection.")
+            raise SetupError("Public API or management access checks failed.")
+        print("PASS: built frontend/dependencies, signing tools/CA, provider tables/job, cron, authenticated public API and management access restrictions.")
         print("OTP channel: " + str(response.get("otpChannel")) + "; mock OTP: "
               + ("enabled (integration testing)" if response.get("mockOtpEnabled") else "disabled"))
+        print("Management manual dossier: " + ("enabled for testing; account/scope/trusted source/session checks still apply."
+              if response.get("mockRegistrationEnabled") else "disabled; set mockRegistrationEnabled=true only for test data."))
         if response.get("sms", {}).get("required"):
             print("SMS: " + ("gateway configured; delivery still needs a real recipient test."
                               if response["sms"].get("ready") else "provider configuration pending; SMS delivery is not ready."))
@@ -601,6 +634,8 @@ def main(argv=None):
         installer.smtp()
         print(json.dumps({"source": str(SOURCE), "runtime": str(runtime), "projectName": installer.config["projectName"],
                           "publicUrl": installer.config["publicUrl"], "integrationUid": installer.config["integration"]["uid"],
+                          "managementUrl": installer.config["publicUrl"] + "/index.php/apps/libresign/f/provider-management",
+                          "build": "verify saved build inputs and reuse assets" if args.skip_build else "install locked dependencies and build frontend including management UI",
                           "requestedOtpPolicy": {k: installer.config["integration"]["policy"][k] for k in ("otpChannel", "otpGateway", "mockOtpEnabled")
                                                  if k in installer.config["integration"]["policy"]},
                           "existingPolicy": "merge explicit keys" if args.update_client else "preserve; use --update-client to apply policy edits",

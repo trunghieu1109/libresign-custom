@@ -9,6 +9,8 @@ Tài liệu dành cho backend của bệnh viện/doanh nghiệp/đối tác k�
 
 Bộ bàn giao: [tham chiếu đủ 24 endpoint, trường dữ liệu và lỗi](API_REFERENCE.md), [OpenAPI public để import](examples/libresign-public.openapi.json), [collection Postman](examples/libresign-public.postman_collection.json) và [environment mẫu](examples/libresign-public.postman_environment.json). Gửi các tệp này cùng cấu trúc thư mục `examples/` cho bên tích hợp; credential bàn giao riêng. `openapi-administration.json` không chứa các API public này.
 
+Vận hành có [màn quản lý chứng thư/phiên cấp/phiên ký](MANAGEMENT.md) dùng phiên đăng nhập admin. Màn này không thay đổi cơ chế tích hợp: đối tác giữ tài khoản máy thường và gọi API public. Các API `/api/v1/management/*` phục vụ UI nội bộ, không dùng App Password đối tác để gọi và không thuộc bộ 24 API public.
+
 ## 1. Hai bên cần chuẩn bị gì?
 
 | Bên vận hành LibreSign cung cấp | Bên tích hợp chuẩn bị |

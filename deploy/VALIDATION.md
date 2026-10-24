@@ -10,7 +10,7 @@ Ngày kiểm tra: **24/10/2026**. Phạm vi là bộ cài của fork LibreSign 1
 | Kiểm tra | Kết quả |
 |---|---|
 | Bash syntax của entrypoint, runtime helper, host dependencies và wrapper ngoài repo | Đạt |
-| Python orchestration regression | **40 tests đạt**: các trường hợp cài mới/chạy lại, secret/identity, OTP email/SMS/hai kênh, mock, app SMS tùy chọn, dung lượng runtime, biến host và xung đột cổng |
+| Python orchestration regression | **49 tests đạt**: cài mới/chạy lại, secret/identity, OTP/SMS/mock, dung lượng/cổng, biên nhận build và policy nhập hồ sơ thử thực tế |
 | PHP syntax và tương thích với Nextcloud đang dùng | Đạt |
 | PHP provisioning trên SQLite snapshot/CA/datadir riêng | **54 assertions đạt**, không ghi vào database hoặc CA đang phục vụ người dùng |
 | Compose render bằng Docker Compose thật | Đạt cho HTTPS local và HTTP overlay; kiểm tra mounts, UID cron và literal `$`/quote/space trong cấu hình thử |
@@ -46,6 +46,15 @@ Doctor đã thực hiện request qua nginx/PHP-FPM với App Password: `/capabi
 - Render bằng Docker Compose thật cho HTTPS local và HTTP IP:port đạt: chỉ publish các cổng mong đợi, dependency nginx chỉ còn Nextcloud, không có dải cổng SQL, biến host không ghi đè cấu hình. Bộ cài kiểm tra Compose ≥2.24.4 để dùng `!override`.
 - Khởi động project fixture riêng với các image đã pin: PHP-FPM phục vụ `status.php` tổng hợp, nginx trả HTTP qua `18085`, HTTPS qua `18443` kiểm chứng certificate/SAN `localhost`, Mailpit UI trả 200 qua `18025`. Tất cả cổng fixture bind loopback. Kiểm tra thật xác nhận chạy lại cho phép mapping của chính project; project khác và TCP listener ngoài Docker bị từ chối.
 - Fixture không chạy Nextcloud bootstrap hay dùng database/CA thật. Các container/network fixture đã được dọn. Không thay mapping `19841 → 8085`, credential hoặc policy của runtime hiện tại. Đây là kiểm chứng topology/cổng, không phải lượt cài sạch end-to-end mới.
+
+## Cập nhật theo màn quản lý và nhập hồ sơ thử
+
+- Đối chiếu controller/service/router Vue mới: không thêm migration, package host hay cổng; vẫn dùng hai migration provider đã có và 24 API public giữ nguyên contract. Màn quản lý yêu cầu admin/session/CSRF; tài khoản máy không được nâng quyền.
+- Bộ cài in URL màn quản lý khi hoàn tất, `plan` nêu rõ URL/bước build. Thêm `build.json` với hash đầu vào source/lockfile; `--skip-build` bị từ chối trước khi khởi động lại container nếu đầu vào đã đổi, asset chính thiếu hoặc runtime chưa có biên nhận. Build thất bại/thay đổi đầu vào trong khi build không giữ biên nhận hợp lệ. `doctor` kiểm tra lại các điều kiện này.
+- **49 tests Python đạt**, gồm 9 kiểm tra bổ sung cho build/frontend/lockfile, PHP-only edit, build lỗi/đồng thời và hiển thị policy nhập tay đang áp dụng. Bash/PHP syntax, `git diff --check`, liên kết tài liệu và các JSON snippet đầy đủ đạt. Smoke `init/plan` không gọi Docker/network, trả đúng URL quản lý và kế hoạch build.
+- Helper trên runtime hiện tại: CA/tools/bảng/job đạt; ba API danh mục public đạt; anonymous public bị từ chối. API quản lý `/api/v1/management/clients` trả **403** với App Password tài khoản máy và **401** khi anonymous. Policy đang dùng vẫn email + mock OTP/registration; không đổi các giá trị đó.
+- Chạy lại provisioning trên **SQLite snapshot, datadir và CA riêng: 54 assertions đạt**, bao gồm tạo account/token, chạy lại giữ credential/policy/CA, cập nhật policy rõ ràng, SMTP và migration. Fixture đã được dọn; không ghi vào database/CA hoặc phiên nghiệp vụ đang phục vụ.
+- README/MANAGEMENT có hướng dẫn cài mới, build đầy đủ khi cập nhật UI, bật/tắt form nhập tay và phân biệt mock registration với mock OTP. INTEGRATION/QUICKSTART làm rõ đối tác tiếp tục dùng API public. Lượt này không build lại UI, không chạy nghiệm thu trình duyệt hay một lượt cài sạch đầy đủ mới; các kết quả UI trong MANAGEMENT thuộc các lượt trước.
 
 ## Giới hạn
 

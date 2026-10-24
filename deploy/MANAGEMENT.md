@@ -48,15 +48,66 @@ Sau khi xử lý, xem trạng thái từng tài liệu, mã lỗi nếu có, PDF
 
 Khi mất kết nối sau một thao tác, làm mới để đối soát trước khi thử lại. Thử lại tạo phiên trong cùng cửa sổ với cùng dữ liệu giữ nguyên request ID; đóng và mở cửa sổ mới bắt đầu yêu cầu mới.
 
-## Áp dụng source
+## Cài mới và cập nhật
 
-Build frontend bằng `npm run build` trong môi trường phát triển hiện có, với người dùng ứng dụng. Không cần migration mới. Với stack source ở repository cha, có thể chạy:
+Màn quản lý nằm trong app LibreSign; không có container, package host, cổng hoặc migration riêng. Bộ cài tiếp tục dùng hai migration provider đã có. Cài mới theo [README bộ cài](README.md) sẽ build cả màn hình này và tạo admin/tài khoản máy. Máy mới mặc định có UID `provider-client`, giữ hai chế độ mock tắt.
+
+Với runtime do `deploy/install.sh` quản lý, từ thư mục source chạy:
 
 ```bash
-bash scripts/source-dev.sh exec sh -c 'cd /var/www/html/apps-extra/libresign && npm run build'
+sudo bash deploy/install.sh plan --runtime-dir /opt/libresign-runtime
+sudo bash deploy/install.sh install --runtime-dir /opt/libresign-runtime
+sudo bash deploy/install.sh doctor --runtime-dir /opt/libresign-runtime
 ```
 
-Sau đó tải lại trang LibreSign. Các API quản trị `/api/v1/management/*` là API nội bộ cho giao diện; bộ 24 API public cho bên tích hợp giữ nguyên contract.
+Thay đường dẫn runtime bằng nơi đã cài. **Bỏ `--skip-build` khi cập nhật màn quản lý/form nhập tay** vì source Vue/TypeScript thay đổi. Bộ cài ghi hash đầu vào vào `build.json`; chỉ cho bỏ build khi hash còn khớp và asset/Composer autoload có đủ. Runtime cũ chưa có file này cần chạy build đầy đủ một lần. Script giữ credential/CA/policy hiện có; thêm `--update-client` chỉ khi muốn áp dụng các key policy trong JSON.
+
+Đăng nhập bằng admin trong `admin.json`, không dùng UID/App Password của bên tích hợp. Chọn **Chứng thư & ký số** hoặc đường dẫn ở đầu tài liệu, chọn đúng UID bên tích hợp. Nếu danh sách trống trên máy mới, bắt đầu tạo dữ liệu thử; đây không phải dữ liệu tự chuyển từ server cũ. Màn hình quản lý phiên/chứng thư, chưa tạo account hoặc sửa policy cho client.
+
+Với stack cũ được tạo bằng `scripts/source-dev.sh`, chạy từ repository Docker cha:
+
+```bash
+bash scripts/source-dev.sh nat build
+bash scripts/source-dev.sh nat restart nextcloud
+bash scripts/source-dev.sh nat occ libresign:configure:check
+```
+
+Với local/tunnel của wrapper cũ, bỏ `nat`. Không áp dụng bộ cài mới vào `.source-runtime` cũ. Tải lại LibreSign bằng **Ctrl + F5** sau build. Các API `/api/v1/management/*` dùng phiên admin, thao tác ghi cần CSRF; backend tích hợp tiếp tục dùng 24 API public và HTTP Basic App Password theo [INTEGRATION.md](INTEGRATION.md).
+
+### Bật form nhập hồ sơ thử
+
+Trong `integration.policy` của `install.json`, khai báo các key sau cùng scope hiện có:
+
+```json
+{
+  "mockRegistrationEnabled": true,
+  "mockOtpEnabled": true,
+  "otpChannel": "email",
+  "trustedSources": ["provider-client"]
+}
+```
+
+Đây là đoạn cần merge vào policy đầy đủ; thay UID bằng tài khoản máy thực tế, giữ `enabled=true` và `certificates:write` trong `scopes`. `mockRegistrationEnabled` cho phép form nhập tay **và QR mock**. `mockOtpEnabled` là lựa chọn độc lập: bật để dùng mã bất kỳ 6 số sau lượt gửi thành công; tắt để kiểm tra đúng mã email. Bật form không bắt buộc bật mock OTP.
+
+Áp dụng bằng `install --update-client`, có thể thêm `--skip-build` khi source/lockfile không đổi kể từ lần build đầy đủ. Chạy `doctor` để xem policy thực tế, sau đó tải lại trang. Bộ cài không tự bật mock khi phát hiện màn quản lý.
+
+Với runtime wrapper cũ, bật thử có chủ đích cho UID `provider-demo`:
+
+```bash
+bash scripts/source-dev.sh nat occ libresign:provider:configure provider-demo \
+  --mock-registration=true --mock-otp=true
+```
+
+CLI này giữ các policy khác, không thêm scope hoặc thay `trustedSources`. Khi nguồn xác minh đang giới hạn và không chứa UID này, điều chỉnh qua cấu hình vận hành trước khi thử form. Tắt thử bằng hai cờ `false`; với bộ cài, ghi rõ hai key `false` vào JSON rồi áp dụng `--update-client`. Xóa key không có nghĩa tắt.
+
+### Kiểm tra sau cài và xử lý sự cố
+
+- `doctor` kiểm tra asset/biên nhận build, CA/tools, bảng/job, cron, API public và xác nhận tài khoản máy nhận 403, anonymous nhận 401 ở API quản trị. Nó không thực hiện cấp/ký/thu hồi, không tự đăng nhập admin hoặc kiểm thử giao diện bằng trình duyệt.
+- Không thấy menu: kiểm tra đang đăng nhập admin, build lại đầy đủ và tải lại trang. Nếu doctor báo `build.json` thiếu/không khớp, chạy `install` không có `--skip-build`.
+- Không thấy UID: kiểm tra đã provision tài khoản/policy trong đúng runtime. Không nhập App Password vào màn này.
+- Không thấy form nhập tay: kiểm tra `mockRegistrationEnabled`, tài khoản/policy được bật, scope, `trustedSources` cho phép UID; phiên phải còn hạn, đang chờ hồ sơ, chưa chốt và không thuộc luồng tái dùng/face-match.
+- Không nhận email trên máy cài mới: Mailpit giữ thư tại `http://127.0.0.1:18025`; dùng [SSH tunnel](README.md#2-cài-với-cấu-hình-riêng--nên-dùng-trên-vps) khi ở máy khác. Mock OTP vẫn cần lượt gửi thành công.
+- Chờ ký lâu: kiểm tra cron và log; bấm làm mới để đối soát, không tạo yêu cầu mới để thay một kết quả chưa rõ.
 
 ## Kiểm chứng ngày 24/10/2026
 

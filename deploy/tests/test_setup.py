@@ -25,8 +25,10 @@ class InstallerTests(unittest.TestCase):
         self.source = self.root / "source with spaces"
         self.runtime = self.root / "private runtime"
         self.config_path = self.root / "config.json"
-        for directory in (".git", "appinfo", "img", "lib/Migration", "deploy"):
+        for directory in (".git", "appinfo", "img", "lib/Migration", "deploy", "src"):
             (self.source / directory).mkdir(parents=True, exist_ok=True)
+        (self.source / "src/main.ts").write_text("// frontend input")
+        (self.source / "package-lock.json").write_text('{"lockfileVersion":3}')
         (self.source / "appinfo/info.xml").write_text('<info><dependencies><nextcloud min-version="36" max-version="36"/></dependencies></info>')
         for version in ("19002Date20261023120000", "19002Date20261023180000"):
             (self.source / f"lib/Migration/Version{version}.php").touch()
@@ -59,6 +61,11 @@ class InstallerTests(unittest.TestCase):
             path.write_text("<?php // private test fixture")
         if "status" in args and "--output=json" in args:
             return json.dumps({"installed": True, "maintenance": False, "needsDbUpgrade": False})
+        if args[-2:-1] == ["-lc"] and "npm run build" in args[-1]:
+            for relative in ("vendor/autoload.php", "js/libresign-main.mjs", "css/libresign-main.css"):
+                path = self.source / relative
+                path.parent.mkdir(exist_ok=True)
+                path.write_text("// built fixture")
         if args[-2:] == ["--services", "running"]:
             raise AssertionError("Invalid compose ps option ordering")
         if "ps" in args and "--services" in args:
@@ -90,6 +97,7 @@ class InstallerTests(unittest.TestCase):
         self.assertIn("cron", up[-1])
         self.assertTrue((self.runtime / "installed.json").exists())
         self.assertNotIn(self.app_password, output)
+        self.assertIn("/index.php/apps/libresign/f/provider-management", output)
         self.assertNotIn(self.provisions[0]["credentials"]["accountPassword"], output)
         for path in [self.runtime / "admin.json", self.runtime / ".env", self.runtime / "credentials/provider-client.json",
                      self.runtime / "integration.postman_environment.private.json"]:
@@ -448,6 +456,91 @@ class InstallerTests(unittest.TestCase):
         with patch.object(setup, "run", side_effect=["container-id\n", output]):
             bindings = self.installer().docker_bindings()
         self.assertEqual([{"host": "0.0.0.0", "port": 18443, "project": "other-project", "service": "nginx"}], bindings)
+
+    def test_skip_build_accepts_unchanged_inputs_and_php_only_edits(self):
+        self.install()
+        (self.source / "lib/Backend.php").write_text("<?php // PHP-only edit")
+        self.calls.clear()
+        self.install(skip_build=True)
+        self.assertFalse(any("npm run build" in arg for args, _ in self.calls for arg in args))
+
+    def test_frontend_edit_rejects_skip_build_before_container_changes(self):
+        self.install()
+        (self.source / "src/main.ts").write_text("// changed frontend")
+        self.calls.clear()
+        with self.assertRaisesRegex(setup.SetupError, "without --skip-build"):
+            self.install(skip_build=True)
+        self.assertFalse(any("up" in args or "stop" in args for args, _ in self.calls))
+        self.install()
+        self.installer().check_build()
+
+    def test_lockfile_edit_rejects_skip_build(self):
+        self.install()
+        (self.source / "package-lock.json").write_text('{"lockfileVersion":3,"changed":true}')
+        with self.assertRaisesRegex(setup.SetupError, "without --skip-build"):
+            self.install(skip_build=True)
+
+    def test_old_runtime_needs_one_full_build_before_skip_build(self):
+        self.install()
+        (self.runtime / "build.json").unlink()
+        with self.assertRaisesRegex(setup.SetupError, "build.json is missing"):
+            self.install(skip_build=True)
+
+    def test_missing_management_bundle_dependencies_fail_build_check(self):
+        self.install()
+        (self.source / "js/libresign-main.mjs").write_text("")
+        with self.assertRaisesRegex(setup.SetupError, "missing or empty"):
+            self.installer().check_build()
+
+    def test_frontend_test_and_generated_asset_changes_do_not_invalidate_receipt(self):
+        self.install()
+        (self.source / "src/tests").mkdir()
+        (self.source / "src/tests/ui.spec.ts").write_text("// test-only edit")
+        (self.source / "img/generated.svg").write_text("<svg/>")
+        (self.source / "js/libresign-main.mjs").write_text("// regenerated output")
+        self.installer().check_build()
+
+    def test_doctor_prints_effective_manual_dossier_policy(self):
+        self.config["integration"]["policy"]["mockRegistrationEnabled"] = True
+        setup.private_json(self.config_path, self.config)
+        installer = self.installer()
+        original_run = self.fake_run
+        def effective_policy(args, **kwargs):
+            result = original_run(args, **kwargs)
+            if "provision.php" in " ".join(map(str, args)) and json.loads(kwargs["data"])["operation"] == "http":
+                return json.dumps({"ok": True, "otpChannel": "email", "mockOtpEnabled": False, "mockRegistrationEnabled": False})
+            return result
+        with patch.object(installer, "preflight"), patch.object(setup, "run", side_effect=effective_policy), contextlib.redirect_stdout(io.StringIO()) as output:
+            installer.install(update_client=False)
+        self.assertIs(True, self.provisions[-1]["policy"]["mockRegistrationEnabled"])
+        self.assertIn("Management manual dossier: disabled", output.getvalue())
+
+    def test_failed_rebuild_invalidates_previous_receipt(self):
+        self.install()
+        original_run = self.fake_run
+        def broken_build(args, **kwargs):
+            if "npm run build" in str(args[-1]):
+                raise setup.SetupError("Build failed")
+            return original_run(args, **kwargs)
+        installer = self.installer()
+        with patch.object(installer, "preflight"), patch.object(setup, "run", side_effect=broken_build), contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaisesRegex(setup.SetupError, "Build failed"):
+                installer.install()
+        self.assertFalse((self.runtime / "build.json").exists())
+
+    def test_changed_inputs_during_build_are_not_marked_successful(self):
+        original_run = self.fake_run
+        def changing_build(args, **kwargs):
+            result = original_run(args, **kwargs)
+            if "npm run build" in str(args[-1]):
+                (self.source / "src/main.ts").write_text("// changed during build")
+            return result
+        installer = self.installer()
+        with patch.object(installer, "preflight"), patch.object(setup, "run", side_effect=changing_build), contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaisesRegex(setup.SetupError, "changed while building"):
+                installer.install()
+        self.assertFalse((self.runtime / "build.json").exists())
+        self.assertFalse(self.provisions)
 
 
 if __name__ == "__main__":

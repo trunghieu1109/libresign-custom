@@ -7,6 +7,8 @@ Tài liệu dành cho lập trình viên tích hợp hệ thống với LibreSig
 
 Phía tích hợp gọi API từ **backend của mình** bằng tài khoản máy được cấp. Người được cấp chứng thư/ký tài liệu không cần tài khoản Nextcloud. Bên vận hành LibreSign phụ trách cài đặt server, CA, công cụ ký và tác vụ nền.
 
+Bên vận hành có thể theo dõi dữ liệu qua [màn quản lý](MANAGEMENT.md) bằng admin. Tài khoản tích hợp vẫn dùng Postman/backend theo hướng dẫn này; không cần cấp quyền admin hoặc chuyển sang API `/management/*`.
+
 ## 1. Thông tin máy thử hiện tại
 
 Thông tin bàn giao ngày **24/10/2026**, dành cho dữ liệu thử. Khi chuyển sang máy/môi trường khác, nhận lại cấu hình tương ứng từ bên vận hành.
@@ -18,7 +20,7 @@ Thông tin bàn giao ngày **24/10/2026**, dành cho dữ liệu thử. Khi chuy
 | Địa chỉ server | `http://76.71.171.67:19841` |
 | API base URL, dùng cho biến `baseUrl` | `http://76.71.171.67:19841/index.php/apps/libresign/api/v1/public` |
 | UID tài khoản thử, dùng cho `apiUser` | `provider-demo` |
-| App Password, dùng cho `apiAppPassword` | `cb2e98910545a50948e12082c747f969622c0caafed6a37a1e5d5b629ba247f449a841d5` |
+| App Password, dùng cho `apiAppPassword` | Bên vận hành bàn giao riêng; không nằm trong tài liệu này |
 | Xác thực | HTTP Basic: UID + **Nextcloud App Password** |
 | Quyền tài khoản thử | `certificates:read`, `certificates:write`, `certificates:revoke`, `signing:read`, `signing:write` |
 | Luồng xác nhận bắt đầu | `confirmationMethod=service_otp`, kênh `email` |
