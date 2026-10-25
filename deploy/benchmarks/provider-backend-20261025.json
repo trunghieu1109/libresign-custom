@@ -1,0 +1,484 @@
+{
+  "copyright": "2026 LibreCode coop and contributors",
+  "license": "AGPL-3.0-or-later",
+  "date": "2026-10-25",
+  "baselineCommit": "50ddd2133ddd6d31f6f20a696d9579f3dee7e330",
+  "database": "Isolated Nextcloud 36 SQLite snapshot; both implementations use the same schema and data",
+  "databaseTiming": "Median of five service calls; excludes HTTP/authentication and native signing engine",
+  "databaseMeasurements": {
+    "certificate_page_20": {
+      "before": {
+        "queries": 42,
+        "milliseconds": 26.670597
+      },
+      "after": {
+        "queries": 3,
+        "milliseconds": 10.811293
+      }
+    },
+    "certificate_page_100": {
+      "before": {
+        "queries": 202,
+        "milliseconds": 131.523995
+      },
+      "after": {
+        "queries": 3,
+        "milliseconds": 51.467628
+      }
+    },
+    "certificate_detail": {
+      "before": {
+        "queries": 3,
+        "milliseconds": 1.454294
+      },
+      "after": {
+        "queries": 2,
+        "milliseconds": 0.804753
+      }
+    },
+    "completed_enrollment_status": {
+      "before": {
+        "queries": 6,
+        "milliseconds": 3.382706
+      },
+      "after": {
+        "queries": 3,
+        "milliseconds": 1.466823
+      }
+    },
+    "active_lookup_221_records": {
+      "before": {
+        "queries": 224,
+        "milliseconds": 147.342548
+      },
+      "after": {
+        "queries": 2,
+        "milliseconds": 1.063152
+      }
+    }
+  },
+  "ioSimulation": "Mocked artifact/state stores and signer; counts application read calls and JSON bytes passed to checkpoint saves, not physical disk I/O or Java signing time",
+  "ioMeasurements": {
+    "complete_100_without_callback": {
+      "before": {
+        "artifactReads": 300
+      },
+      "after": {
+        "artifactReads": 200
+      }
+    },
+    "one_result_from_100": {
+      "before": {
+        "artifactReads": 100
+      },
+      "after": {
+        "artifactReads": 1
+      }
+    },
+    "checkpoint_20_with_256k_image": {
+      "before": {
+        "serializedBytesWritten": 300953098,
+        "milliseconds": 1078.86514
+      },
+      "after": {
+        "serializedBytesWritten": 500058,
+        "milliseconds": 21.541625
+      }
+    }
+  },
+  "issuanceMethodology": "Actual OpenSSL/PFX, email OTP delivered to private Mailpit, RSA assertions, four flows with/without callback. Counts core provider/CRL SQL and workflow decryptions across each service operation; excludes HTTP authentication, filecache and configuration SQL. One timing sample per branch; RSA key generation and email/OTP hashing vary. Dynamic certificate IDs/timestamps normalized only for response comparison.",
+  "issuanceMeasurements": {
+    "service_otp": {
+      "registration": {
+        "before": {
+          "queries": 6,
+          "workflowDecryptions": 0,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 12.008334
+        },
+        "after": {
+          "queries": 6,
+          "workflowDecryptions": 0,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 8.526331
+        }
+      },
+      "identity": {
+        "before": {
+          "queries": 9,
+          "workflowDecryptions": 5,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 273.279726
+        },
+        "after": {
+          "queries": 8,
+          "workflowDecryptions": 2,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 235.31298
+        }
+      },
+      "resend": {
+        "before": {
+          "queries": 6,
+          "workflowDecryptions": 4,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 232.005548
+        },
+        "after": {
+          "queries": 6,
+          "workflowDecryptions": 3,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 232.401839
+        }
+      },
+      "otp": {
+        "before": {
+          "queries": 6,
+          "workflowDecryptions": 4,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 189.523755
+        },
+        "after": {
+          "queries": 6,
+          "workflowDecryptions": 3,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 189.314633
+        }
+      },
+      "confirm": {
+        "before": {
+          "queries": 21,
+          "workflowDecryptions": 12,
+          "issuanceCalls": 1,
+          "engineMilliseconds": 73.085464,
+          "milliseconds": 111.829184
+        },
+        "after": {
+          "queries": 13,
+          "workflowDecryptions": 3,
+          "issuanceCalls": 1,
+          "engineMilliseconds": 24.041308,
+          "milliseconds": 52.66379
+        }
+      },
+      "confirm_retry": {
+        "before": {
+          "queries": 9,
+          "workflowDecryptions": 7,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 8.29475
+        },
+        "after": {
+          "queries": 3,
+          "workflowDecryptions": 2,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 2.564839
+        }
+      },
+      "reuse_registration": {
+        "before": {
+          "queries": 20,
+          "workflowDecryptions": 12,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 251.311308
+        },
+        "after": {
+          "queries": 14,
+          "workflowDecryptions": 4,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 242.393385
+        }
+      }
+    },
+    "external_assertion": {
+      "registration": {
+        "before": {
+          "queries": 6,
+          "workflowDecryptions": 0,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 8.643602
+        },
+        "after": {
+          "queries": 6,
+          "workflowDecryptions": 0,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 8.031168
+        }
+      },
+      "identity": {
+        "before": {
+          "queries": 7,
+          "workflowDecryptions": 4,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 10.992209
+        },
+        "after": {
+          "queries": 5,
+          "workflowDecryptions": 1,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 8.21365
+        }
+      },
+      "confirm": {
+        "before": {
+          "queries": 24,
+          "workflowDecryptions": 14,
+          "issuanceCalls": 1,
+          "engineMilliseconds": 60.645139,
+          "milliseconds": 102.42522
+        },
+        "after": {
+          "queries": 16,
+          "workflowDecryptions": 4,
+          "issuanceCalls": 1,
+          "engineMilliseconds": 83.626232,
+          "milliseconds": 116.493581
+        }
+      },
+      "confirm_retry": {
+        "before": {
+          "queries": 9,
+          "workflowDecryptions": 7,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 8.602262
+        },
+        "after": {
+          "queries": 3,
+          "workflowDecryptions": 2,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 2.74332
+        }
+      },
+      "reuse_registration": {
+        "before": {
+          "queries": 18,
+          "workflowDecryptions": 11,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 23.149004
+        },
+        "after": {
+          "queries": 11,
+          "workflowDecryptions": 3,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 15.432146
+        }
+      }
+    },
+    "service_otp_callback": {
+      "registration": {
+        "before": {
+          "queries": 6,
+          "workflowDecryptions": 0,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 8.149929
+        },
+        "after": {
+          "queries": 6,
+          "workflowDecryptions": 0,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 8.983392
+        }
+      },
+      "identity": {
+        "before": {
+          "queries": 9,
+          "workflowDecryptions": 5,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 243.690099
+        },
+        "after": {
+          "queries": 8,
+          "workflowDecryptions": 2,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 232.626699
+        }
+      },
+      "resend": {
+        "before": {
+          "queries": 6,
+          "workflowDecryptions": 4,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 232.021877
+        },
+        "after": {
+          "queries": 6,
+          "workflowDecryptions": 3,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 232.443798
+        }
+      },
+      "otp": {
+        "before": {
+          "queries": 6,
+          "workflowDecryptions": 4,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 191.813073
+        },
+        "after": {
+          "queries": 6,
+          "workflowDecryptions": 3,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 184.129544
+        }
+      },
+      "confirm": {
+        "before": {
+          "queries": 22,
+          "workflowDecryptions": 12,
+          "issuanceCalls": 1,
+          "engineMilliseconds": 27.136137,
+          "milliseconds": 64.781103
+        },
+        "after": {
+          "queries": 14,
+          "workflowDecryptions": 3,
+          "issuanceCalls": 1,
+          "engineMilliseconds": 26.551627,
+          "milliseconds": 55.442039
+        }
+      },
+      "confirm_retry": {
+        "before": {
+          "queries": 11,
+          "workflowDecryptions": 7,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 10.968799
+        },
+        "after": {
+          "queries": 5,
+          "workflowDecryptions": 2,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 4.339666
+        }
+      },
+      "reuse_registration": {
+        "before": {
+          "queries": 20,
+          "workflowDecryptions": 12,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 248.729469
+        },
+        "after": {
+          "queries": 14,
+          "workflowDecryptions": 4,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 241.43426
+        }
+      }
+    },
+    "external_assertion_callback": {
+      "registration": {
+        "before": {
+          "queries": 6,
+          "workflowDecryptions": 0,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 8.418761
+        },
+        "after": {
+          "queries": 6,
+          "workflowDecryptions": 0,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 7.888668
+        }
+      },
+      "identity": {
+        "before": {
+          "queries": 7,
+          "workflowDecryptions": 4,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 10.904879
+        },
+        "after": {
+          "queries": 5,
+          "workflowDecryptions": 1,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 8.12127
+        }
+      },
+      "confirm": {
+        "before": {
+          "queries": 25,
+          "workflowDecryptions": 14,
+          "issuanceCalls": 1,
+          "engineMilliseconds": 31.752834,
+          "milliseconds": 73.477545
+        },
+        "after": {
+          "queries": 17,
+          "workflowDecryptions": 4,
+          "issuanceCalls": 1,
+          "engineMilliseconds": 17.705265,
+          "milliseconds": 50.091641
+        }
+      },
+      "confirm_retry": {
+        "before": {
+          "queries": 11,
+          "workflowDecryptions": 7,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 10.132377
+        },
+        "after": {
+          "queries": 5,
+          "workflowDecryptions": 2,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 4.310755
+        }
+      },
+      "reuse_registration": {
+        "before": {
+          "queries": 18,
+          "workflowDecryptions": 11,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 22.828582
+        },
+        "after": {
+          "queries": 11,
+          "workflowDecryptions": 3,
+          "issuanceCalls": 0,
+          "engineMilliseconds": 0,
+          "milliseconds": 15.270215
+        }
+      }
+    }
+  }
+}

@@ -58,7 +58,8 @@ class ProviderStateStore {
 	public function create(string $uid, string $kind, string $key, array $data, string $status = 'PENDING', int $ttl = 900): array {
 		$record = ['record_id' => UUIDUtil::getUUID(), 'client_uid' => $uid, 'kind' => $kind,
 			'key_hash' => $this->hash($key), 'status' => $status, 'created_at' => time(), 'updated_at' => time(),
-			'expires_at' => $ttl ? time() + $ttl : 0, 'version' => 0];
+			'expires_at' => $ttl ? time() + $ttl : 0, 'version' => 0,
+			'next_attempt_at' => $kind === 'event' ? (int)($data['nextAt'] ?? 0) : 0];
 		$qb = $this->db->getQueryBuilder();
 		$qb->insert('libresign_provider_state');
 		foreach ($record + ['encrypted_data' => $this->encrypt($data)] as $name => $value) {
@@ -110,6 +111,7 @@ class ProviderStateStore {
 			->set('status', $qb->createNamedParameter($record['status']))
 			->set('updated_at', $qb->createNamedParameter(time(), IQueryBuilder::PARAM_INT))
 			->set('version', $qb->createNamedParameter($record['version'] + 1, IQueryBuilder::PARAM_INT))
+			->set('next_attempt_at', $qb->createNamedParameter($record['kind'] === 'event' ? (int)($record['data']['nextAt'] ?? 0) : 0, IQueryBuilder::PARAM_INT))
 			->where($qb->expr()->eq('record_id', $qb->createNamedParameter($record['record_id'])))
 			->andWhere($qb->expr()->eq('client_uid', $qb->createNamedParameter($record['client_uid'])))
 			->andWhere($qb->expr()->eq('version', $qb->createNamedParameter($record['version'], IQueryBuilder::PARAM_INT)));
@@ -118,15 +120,21 @@ class ProviderStateStore {
 		}
 		$record['version']++;
 		$record['updated_at'] = time();
+		$record['next_attempt_at'] = $record['kind'] === 'event' ? (int)($record['data']['nextAt'] ?? 0) : 0;
 	}
 
-	public function jobs(string $kind, string $status, int $limit = 20): array {
+	public function jobs(string $kind, string $status, int $limit = 20, bool $withData = true): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')->from('libresign_provider_state')
+		$qb->select(...($withData ? ['*'] : ['record_id', 'client_uid']))->from('libresign_provider_state')
 			->where($qb->expr()->eq('kind', $qb->createNamedParameter($kind)))
 			->andWhere($qb->expr()->eq('status', $qb->createNamedParameter($status)))
 			->orderBy('updated_at', 'ASC')->setMaxResults($limit);
-		return array_map($this->decode(...), $qb->executeQuery()->fetchAll());
+		if ($kind === 'event') {
+			$qb->andWhere($qb->expr()->lte('next_attempt_at', $qb->createNamedParameter(time(), IQueryBuilder::PARAM_INT)))
+				->orderBy('next_attempt_at', 'ASC')->addOrderBy('updated_at', 'ASC');
+		}
+		$rows = $qb->executeQuery()->fetchAll();
+		return $withData ? array_map($this->decode(...), $rows) : $rows;
 	}
 
 	/** Paginated workflow records; always constrain both tenant and workflow kind. */

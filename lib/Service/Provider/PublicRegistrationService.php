@@ -68,9 +68,12 @@ class PublicRegistrationService {
 			$subjectKey = $normalized['person']['personalIdNumber'];
 			$subject = $this->store->byKey($client['uid'], 'subject', $subjectKey)
 				?? $this->store->create($client['uid'], 'subject', $subjectKey, ['pending' => null, 'dossier' => null], 'READY', 0);
+			$previousDossier = null;
+			$native = null;
 			$existing = $this->active($client, $subjectKey);
 			if (!$existing && $normalized['reusePreviousDossier']) {
-				$eligibility = $this->reuse($client, $subjectKey);
+				$previousDossier = empty($subject['data']['dossier']) ? null : $this->store->get($client['uid'], 'enrollment', $subject['data']['dossier']);
+				$eligibility = $this->reuseData($client, $previousDossier);
 				if (!$eligibility['reusable']) {
 					throw new ProviderException($eligibility['cccdExpired'] ? 'SYS-0058' : 'dossier_unavailable', 'Collect a new verified identity dossier.', 409);
 				}
@@ -79,8 +82,7 @@ class PublicRegistrationService {
 				throw new ProviderException('SYS-0030', 'An active certificate already exists.', 409);
 			}
 			if ($existing) {
-				$identity = $this->certificates->identity($client, $existing['certAlias']);
-				if (!hash_equals(ProviderContract::fingerprint($identity['person']), ProviderContract::fingerprint($normalized['person']))) {
+				if (!hash_equals(ProviderContract::fingerprint($existing['person']), ProviderContract::fingerprint($normalized['person']))) {
 					throw new ProviderException('identity_conflict', 'Existing certificate identity/contact differs; supply a separately verified update.', 409);
 				}
 			} elseif (!empty($subject['data']['pending'])) {
@@ -99,46 +101,38 @@ class PublicRegistrationService {
 				$subject['data']['pending'] = $record['record_id'];
 				$this->store->save($subject);
 				if ($normalized['reusePreviousDossier']) {
-					$eligibility = $this->reuse($client, $subjectKey);
+					$eligibility = $this->reuseData($client, $previousDossier);
 					if (!$eligibility['reusable']) {
 						throw new ProviderException($eligibility['cccdExpired'] ? 'SYS-0058' : 'dossier_unavailable', 'Collect a new verified identity dossier.', 409);
 					}
-					$original = $this->store->get($client['uid'], 'enrollment', $subject['data']['dossier']);
-					$record['data']['dossier'] = $original['data']['dossier'];
+					$record['data']['dossier'] = $previousDossier['data']['dossier'];
 					$record['data']['step'] = $normalized['requireReuseFaceMatch'] ? 'FACE_MATCH_REQUIRED' : 'DOSSIER_ACCEPTED';
 					$this->store->save($record);
 					if (!$normalized['requireReuseFaceMatch']) {
-						$this->prepare($client, $record);
+						$native = $this->prepare($client, $record);
 					}
 				}
 			}
-			return $this->view($client, $record);
+			return $this->view($client, $record, $native);
 		});
 	}
 
 	private function active(array $client, string $personalId): ?array {
-		$found = [];
-		$page = 0;
-		do {
-			$list = $this->certificates->certificates($client, $personalId, $page++, 100);
-			foreach ($list['items'] as $certificate) {
-				if ($certificate['status'] === 'ACTIVE') {
-					$found[] = $certificate;
-				}
-			}
-		} while ($list['hasMore']);
+		$found = $this->certificates->activeCertificates($client, $personalId);
 		if (count($found) > 1) {
 			throw new ProviderException('ambiguous_certificate', 'More than one active certificate exists; select a certAlias explicitly.', 409);
 		}
 		if ($found) {
-			$this->certificates->signingCredential($client, $found[0]['certAlias']);
+			$credential = $this->certificates->signingCredential($client, $found[0]['certAlias']);
+			return $found[0] + ['person' => $credential['person']];
 		}
-		return $found[0] ?? null;
+		return null;
 	}
 
 	public function receive(array $client, string $id, array $body, bool $cardReader): array {
 		return $this->store->locked('enrollment:' . $id, function () use ($client, $id, $body, $cardReader): array {
 			$record = $this->pending($client, $id);
+			$native = null;
 			if ($record['data']['input']['reusePreviousDossier']) {
 				throw new ProviderException('invalid_state', 'This session uses a stored dossier.', 409);
 			}
@@ -148,9 +142,9 @@ class PublicRegistrationService {
 					throw new ProviderException('dossier_frozen', 'The accepted dossier cannot be replaced in this session.', 409);
 				}
 				if (!$record['data']['legacySession']) {
-					$this->prepare($client, $record);
+					$native = $this->prepare($client, $record);
 				}
-				return ['session' => $this->view($client, $record), 'faceMatch' => $record['data']['dossier']['faceMatch'], 'certificate' => null];
+				return ['session' => $this->view($client, $record, $native), 'faceMatch' => $record['data']['dossier']['faceMatch'], 'certificate' => null];
 			}
 			$person = $record['data']['input']['person'];
 			if (ProviderContract::personalId($body['identifyNumber'] ?? $body['personalIdNumber'] ?? null) !== $person['personalIdNumber']
@@ -214,8 +208,8 @@ class PublicRegistrationService {
 			$record['data']['dossier'] = $dossier;
 			$record['data']['step'] = 'DOSSIER_ACCEPTED';
 			$this->store->save($record);
-			$this->prepare($client, $record);
-			return ['session' => $this->view($client, $record), 'faceMatch' => $dossier['faceMatch'], 'certificate' => null];
+			$native = $this->prepare($client, $record);
+			return ['session' => $this->view($client, $record, $native), 'faceMatch' => $dossier['faceMatch'], 'certificate' => null];
 		});
 	}
 
@@ -237,7 +231,7 @@ class PublicRegistrationService {
 		return $value;
 	}
 
-	private function prepare(array $client, array &$record): void {
+	private function prepare(array $client, array &$record): array {
 		if ($record['data']['step'] === 'FACE_MATCH_REQUIRED') {
 			throw new ProviderException('SYS-0059', 'Face-match is required before issuance.', 409);
 		}
@@ -248,14 +242,21 @@ class PublicRegistrationService {
 		$record['data']['step'] = 'AWAITING_CONFIRMATION';
 		$this->store->save($record);
 		if ($input['confirmationMethod'] === 'service_otp') {
-			$this->certificates->sendCode($client, $legacy['sessionId']);
+			$sent = $this->certificates->sendCode($client, $legacy['sessionId']);
+			$legacy['otpChannel'] = $client['config']['otpChannel'] ?? null;
+			$legacy['otpExpiresAt'] = $sent['expiresAt'];
 		}
+		return $legacy;
 	}
 
 	public function reuse(array $client, string $personalId): array {
 		$personalId = ProviderContract::personalId($personalId);
 		$subject = $this->store->byKey($client['uid'], 'subject', $personalId);
 		$dossier = empty($subject['data']['dossier']) ? null : $this->store->get($client['uid'], 'enrollment', $subject['data']['dossier']);
+		return $this->reuseData($client, $dossier);
+	}
+
+	private function reuseData(array $client, ?array $dossier): array {
 		$expiry = $dossier['data']['dossier']['fields']['expiredDate'] ?? null;
 		$edge = ($client['config']['edgeDeployment'] ?? false) === true;
 		$expired = $expiry !== null && $expiry < gmdate('Y-m-d');
@@ -298,8 +299,8 @@ class PublicRegistrationService {
 				'threshold' => $threshold, 'portrait' => $this->artifacts->put($id, 'reuse-portrait', $portrait)];
 			$record['data']['step'] = 'DOSSIER_ACCEPTED';
 			$this->store->save($record);
-			$this->prepare($client, $record);
-			return $this->view($client, $record);
+			$native = $this->prepare($client, $record);
+			return $this->view($client, $record, $native);
 		});
 	}
 
@@ -307,14 +308,16 @@ class PublicRegistrationService {
 		return $this->store->locked('enrollment:' . $id, function () use ($client, $id, $action, $proof): array {
 			$record = $this->store->get($client['uid'], 'enrollment', $id);
 			if ($record['status'] === 'ACTIVE' && $action === 'confirm') {
-				$this->issuedCallback($client, $record);
-				return $this->view($client, $record);
+				$result = $this->view($client, $record);
+				$this->issuedCallback($client, $record, $result['certificate'] ?? null);
+				return $result;
 			}
 			$this->requirePending($record);
 			$legacy = $record['data']['legacySession'];
+			$native = null;
 			if ($action === 'cancel') {
 				if ($legacy) {
-					$this->certificates->cancel($client, $legacy);
+					$native = $this->certificates->cancel($client, $legacy);
 				}
 				$record['status'] = 'CANCELLED';
 			} else {
@@ -337,9 +340,9 @@ class PublicRegistrationService {
 					$record['data']['step'] = 'VERIFIED';
 				} elseif ($action === 'confirm') {
 					if ($record['data']['input']['confirmationMethod'] === 'external_assertion') {
-						$this->certificates->confirm($client, $legacy, '', $proof);
+						$native = $this->certificates->confirm($client, $legacy, '', $proof);
 					} else {
-						$this->certificates->issueVerified($client, $legacy);
+						$native = $this->certificates->issueVerified($client, $legacy);
 					}
 					$record['status'] = 'ACTIVE';
 					$record['data']['step'] = 'COMPLETE';
@@ -347,7 +350,7 @@ class PublicRegistrationService {
 					throw new \InvalidArgumentException('Unknown enrollment action');
 				}
 			}
-			$this->store->transaction(function () use (&$record, $client, $id): void {
+			$this->store->transaction(function () use (&$record, $client, $id, $native): void {
 				$this->store->save($record);
 				if ($record['status'] === 'ACTIVE') {
 					$subject = $this->store->byKey($client['uid'], 'subject', $record['data']['input']['person']['personalIdNumber']);
@@ -355,18 +358,19 @@ class PublicRegistrationService {
 						$subject['data']['dossier'] = $id;
 						$this->store->save($subject);
 					}
-					$this->issuedCallback($client, $record);
+					$this->issuedCallback($client, $record, isset($native['certificate'])
+						? ProviderContract::certificate($native['certificate'], ['person' => $record['data']['input']['person']]) : null);
 				}
 			});
-			return $this->view($client, $record);
+			return $this->view($client, $record, $native);
 		});
 	}
 
-	private function issuedCallback(array $client, array $record): void {
-		if ($record['data']['reusedCertificate']) {
+	private function issuedCallback(array $client, array $record, ?array $certificate = null): void {
+		if ($record['data']['reusedCertificate'] || !$record['data']['input']['callbackUrl']) {
 			return;
 		}
-		$certificate = $this->certificate($client, $record['data']['legacySession']);
+		$certificate ??= $this->certificate($client, $record['data']['legacySession']);
 		$this->webhooks->queue($client, $record['data']['input']['callbackUrl'], 'certificate:' . $record['record_id'],
 			array_intersect_key($certificate, array_flip(['subjectName', 'validFrom', 'validTo', 'status', 'certAlias', 'personalIdNumber'])) + ['sessionId' => $record['record_id']]);
 	}
@@ -390,10 +394,10 @@ class PublicRegistrationService {
 		}
 	}
 
-	private function view(array $client, array $record): array {
+	private function view(array $client, array $record, ?array $native = null): array {
 		$data = $record['data'];
 		$status = $record['status'] === 'PENDING' && $record['expires_at'] <= time() ? 'EXPIRED' : $record['status'];
-		$native = $data['legacySession'] ? $this->certificates->registration($client, $data['legacySession']) : null;
+		$native ??= $data['legacySession'] ? $this->certificates->registration($client, $data['legacySession']) : null;
 		if (in_array($native['status'] ?? '', ['ISSUING', 'RECOVERY_REQUIRED', 'LOCKED'], true)) {
 			$status = $native['status'];
 		}
@@ -434,15 +438,16 @@ class PublicRegistrationService {
 			$result['qrCode'] = base64_encode((new PngWriter())->write(new QrCode(data: $result['registrationUrl']))->getString());
 		}
 		if ($status === 'ACTIVE') {
-			$result['certificate'] = $this->certificate($client, $data['legacySession']);
+			$result['certificate'] = ProviderContract::certificate($native['certificate'], ['person' => $person]);
 		} elseif ($data['legacySession'] && $data['input']['confirmationMethod'] === 'external_assertion') {
-			$result['challengeBase64'] = $this->certificates->registration($client, $data['legacySession'])['challengeBase64'] ?? null;
+			$result['challengeBase64'] = $native['challengeBase64'] ?? null;
 		}
 		return $result;
 	}
 
 	public function certificate(array $client, string $alias): array {
-		return ProviderContract::certificate($this->certificates->certificate($client, $alias), $this->certificates->identity($client, $alias));
+		$details = $this->certificates->certificateDetails($client, $alias);
+		return ProviderContract::certificate($details['certificate'], $details['identity']);
 	}
 
 	public function listing(array $client, string $personalId, int $page, int $size): array {
@@ -452,8 +457,8 @@ class PublicRegistrationService {
 		if ($personalId !== '') {
 			ProviderContract::personalId($personalId);
 		}
-		$list = $this->certificates->certificates($client, $personalId, $page - 1, $size);
-		return ['items' => array_map(fn ($certificate) => ProviderContract::certificate($certificate, $this->certificates->identity($client, $certificate['certAlias'])), $list['items']),
+		$list = $this->certificates->certificateDetailsPage($client, $personalId, $page - 1, $size);
+		return ['items' => array_map(fn ($item) => ProviderContract::certificate($item['certificate'], $item['identity']), $list['items']),
 			'totalItem' => $this->certificates->countCertificates($client, $personalId)];
 	}
 }

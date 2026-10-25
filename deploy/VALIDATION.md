@@ -56,6 +56,12 @@ Doctor đã thực hiện request qua nginx/PHP-FPM với App Password: `/capabi
 - Chạy lại provisioning trên **SQLite snapshot, datadir và CA riêng: 54 assertions đạt**, bao gồm tạo account/token, chạy lại giữ credential/policy/CA, cập nhật policy rõ ràng, SMTP và migration. Fixture đã được dọn; không ghi vào database/CA hoặc phiên nghiệp vụ đang phục vụ.
 - README/MANAGEMENT có hướng dẫn cài mới, build đầy đủ khi cập nhật UI, bật/tắt form nhập tay và phân biệt mock registration với mock OTP. INTEGRATION/QUICKSTART làm rõ đối tác tiếp tục dùng API public. Lượt này không build lại UI, không chạy nghiệm thu trình duyệt hay một lượt cài sạch đầy đủ mới; các kết quả UI trong MANAGEMENT thuộc các lượt trước.
 
+## Tối ưu backend ngày 25/10/2026
+
+Đã tối ưu truy vấn chứng thư, tải kết quả riêng, checkpoint ảnh và hàng đợi callback, giữ nguyên contract API. So sánh trực tiếp với commit ban đầu và ghi nhận runtime/migration/kiểm thử tại [BACKEND_OPTIMIZATION.md](BACKEND_OPTIMIZATION.md); dữ liệu đo nằm trong [benchmarks/provider-backend-20261025.json](benchmarks/provider-backend-20261025.json).
+
+Bổ sung đo riêng các POST cấp chứng thư bằng CA/PFX thật, OTP thật qua Mailpit và RSA assertion: **4 tests / 144 assertions đạt**, gồm callback và retry không cấp lặp. Confirm OTP giảm **21 → 13**, confirm assertion **24 → 16** truy vấn nghiệp vụ; gửi/xác minh OTP giữ số SQL và giảm một lượt giải mã. Bộ HTTP public/OCS chạy lại **5 tests / 1.613 assertions đạt**; không có migration bổ sung.
+
 ## Giới hạn
 
 - Cài sạch được thử trên Docker host Linux đã có Docker/Git/Python/ACL; nhánh cài package Ubuntu được kiểm tra cú pháp và đối chiếu tài liệu Docker, chưa chạy trên một hệ điều hành Ubuntu trắng.

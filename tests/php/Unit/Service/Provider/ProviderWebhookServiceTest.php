@@ -18,6 +18,18 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 
 class ProviderWebhookServiceTest extends TestCase {
+	public function testRetryTimeIsRecheckedAfterAcquiringTheEventLock(): void {
+		$store = $this->createMock(ProviderStateStore::class);
+		$store->expects($this->once())->method('jobs')->with('event', 'PENDING', 20, false)
+			->willReturn([['record_id' => 'event-1', 'client_uid' => 'demo']]);
+		$store->method('locked')->willReturnCallback(fn ($key, $callback) => $callback());
+		$store->method('get')->willReturn(['status' => 'PENDING', 'data' => ['nextAt' => time() + 3600]]);
+		$store->expects($this->never())->method('save');
+		$http = $this->createMock(IClientService::class);
+		$http->expects($this->never())->method('newClient');
+		(new ProviderWebhookService($store, $http, $this->createMock(IAppConfig::class)))->run();
+	}
+
 	public function testChangedDeliveryConfigurationDoesNotBlockPersistingCompletion(): void {
 		$store = $this->createMock(ProviderStateStore::class);
 		$http = $this->createMock(IClientService::class);

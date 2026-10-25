@@ -72,7 +72,8 @@ class ProviderCertificateService {
 		$registration->setVersion(0);
 		$registration->setCreatedAt(time());
 		$registration->setExpiresAt(time() + 900);
-		$this->setState($registration, ['input' => $input, 'fingerprint' => $fingerprint, 'nonce' => $this->random->generate(32), 'attempts' => 0, 'sendCount' => 0]);
+		$state = ['input' => $input, 'fingerprint' => $fingerprint, 'nonce' => $this->random->generate(32), 'attempts' => 0, 'sendCount' => 0];
+		$this->setState($registration, $state);
 		try {
 			$this->registrations->insert($registration);
 		} catch (DatabaseException $e) {
@@ -81,7 +82,7 @@ class ProviderCertificateService {
 			}
 			return $this->replayed($this->registrations->findForClient($client['uid'], $key, true), $fingerprint);
 		}
-		return $this->registrationData($registration);
+		return $this->registrationData($registration, $state);
 	}
 
 	public function registration(array $client, string $sessionId): array {
@@ -90,8 +91,7 @@ class ProviderCertificateService {
 
 	public function sendCode(array $client, string $sessionId): array {
 		$registration = $this->find($client, $sessionId);
-		$this->requirePending($registration);
-		$state = $this->state($registration);
+		$state = $this->requirePending($registration);
 		if ($state['input']['confirmationMethod'] !== 'service_otp') {
 			throw new ProviderException('wrong_confirmation_method', 'This registration uses an external assertion.', 409);
 		}
@@ -123,9 +123,8 @@ class ProviderCertificateService {
 		if ($registration->getStatus() === 'ACTIVE') {
 			return $this->registrationData($registration);
 		}
-		$this->requirePending($registration);
+		$state = $this->requirePending($registration);
 		$this->requireSetup();
-		$state = $this->state($registration);
 		$state['attempts']++;
 		$this->persist($registration, $state);
 		if (!$this->proofs->verify($client['config'], $state, $this->challenge($registration, $state), $otpValue, $assertion)) {
@@ -147,9 +146,8 @@ class ProviderCertificateService {
 		if ($registration->getStatus() === 'ACTIVE') {
 			return $this->registrationData($registration);
 		}
-		$this->requirePending($registration);
+		$state = $this->requirePending($registration);
 		$this->requireSetup();
-		$state = $this->state($registration);
 		if (empty($state['proofVerifiedAt'])) {
 			throw new ProviderException('confirmation_required', 'Verify consent before issuing this certificate.', 403);
 		}
@@ -190,35 +188,81 @@ class ProviderCertificateService {
 			$this->logger->error('Provider certificate issuance needs recovery', ['sessionId' => $sessionId]);
 			throw new ProviderException('issuance_requires_recovery', 'Issuance could not be completed; an administrator must inspect this session before retrying.', 503);
 		}
-		return $this->registrationData($registration);
+		return $this->registrationData($registration, $state);
 	}
 
 	public function cancel(array $client, string $sessionId): array {
 		$registration = $this->find($client, $sessionId);
+		$state = null;
 		if ($registration->getStatus() !== 'CANCELLED') {
-			$this->requirePending($registration);
+			$state = $this->requirePending($registration);
 			$registration->setStatus('CANCELLED');
-			$state = $this->state($registration);
 			unset($state['codeHash']);
 			$this->persist($registration, $state);
 		}
-		return $this->registrationData($registration);
+		return $this->registrationData($registration, $state);
 	}
 
 	public function certificates(array $client, string $personalIdNumber, int $pageIndex, int $pageSize): array {
+		$page = $this->certificateDetailsPage($client, $personalIdNumber, $pageIndex, $pageSize);
+		$page['items'] = array_column($page['items'], 'certificate');
+		return $page;
+	}
+
+	/** Internal projection; the OCS and public adapters keep their existing response models. */
+	public function certificateDetailsPage(array $client, string $personalIdNumber, int $pageIndex, int $pageSize): array {
 		if ($pageIndex < 0 || $pageIndex > 100000 || $pageSize < 1 || $pageSize > 100) {
 			throw new ProviderException('invalid_pagination', 'pageIndex must be 0-100000 and pageSize must be 1-100.');
 		}
 		$hash = $personalIdNumber === '' ? null : $this->subjectHash($client['uid'], $this->input->personalId($personalIdNumber));
 		$rows = $this->registrations->certificates($client['uid'], $hash, $pageSize + 1, $pageIndex * $pageSize);
+		$items = array_slice($rows, 0, $pageSize);
+		$native = $this->crlMapper->findBySerialNumbers(array_map(fn (ProviderRegistration $r) => $r->getSerialNumber(), $items));
 		return [
-			'items' => array_map(fn (ProviderRegistration $r) => $this->certificateData($r), array_slice($rows, 0, $pageSize)),
+			'items' => array_map(function (ProviderRegistration $r) use ($native): array {
+				$state = $this->state($r);
+				if (!isset($native[$r->getSerialNumber()])) {
+					throw new DoesNotExistException('Certificate revocation record not found.');
+				}
+				return ['certificate' => $this->certificateData($r, $state, $native[$r->getSerialNumber()]), 'identity' => $state['input']];
+			}, $items),
 			'pageIndex' => $pageIndex, 'pageSize' => $pageSize, 'hasMore' => count($rows) > $pageSize,
 		];
 	}
 
 	public function certificate(array $client, string $certAlias): array {
 		return $this->certificateData($this->findCertificate($client, $certAlias));
+	}
+
+	public function certificateDetails(array $client, string $certAlias): array {
+		$registration = $this->findCertificate($client, $certAlias);
+		$state = $this->state($registration);
+		return ['certificate' => $this->certificateData($registration, $state), 'identity' => $state['input']];
+	}
+
+	/** Resolve at most two active certificates: callers must reject ambiguity. */
+	public function activeCertificates(array $client, string $personalIdNumber): array {
+		$hash = $this->subjectHash($client['uid'], $this->input->personalId($personalIdNumber));
+		$before = PHP_INT_MAX;
+		$found = [];
+		do {
+			$rows = $this->registrations->activeCandidates($client['uid'], $hash, $before);
+			$native = $this->crlMapper->findBySerialNumbers(array_map(fn (ProviderRegistration $r) => $r->getSerialNumber(), $rows));
+			foreach ($rows as $row) {
+				$before = (int)$row->getId();
+				if (!isset($native[$row->getSerialNumber()])) {
+					throw new DoesNotExistException('Certificate revocation record not found.');
+				}
+				$certificate = $this->certificateData($row, null, $native[$row->getSerialNumber()]);
+				if ($certificate['status'] === 'ACTIVE') {
+					$found[] = $certificate;
+					if (count($found) === 2) {
+						return $found;
+					}
+				}
+			}
+		} while (count($rows) === 100);
+		return $found;
 	}
 
 	public function publicCertificate(array $client, string $certAlias): array {
@@ -238,11 +282,11 @@ class ProviderCertificateService {
 	/** Resolve a managed key only after the calling workflow has verified document consent. */
 	public function signingCredential(array $client, string $certAlias): array {
 		$registration = $this->findCertificate($client, $certAlias);
-		$certificate = $this->certificateData($registration);
+		$state = $this->state($registration);
+		$certificate = $this->certificateData($registration, $state);
 		if ($certificate['status'] !== 'ACTIVE' || $certificate['validFrom'] > time()) {
 			throw new ProviderException('SYS-0031', 'Certificate is expired, revoked or not yet valid.', 409);
 		}
-		$state = $this->state($registration);
 		$pfx = $this->credentials->read($certAlias);
 		if (!openssl_pkcs12_read($pfx, $parts, $state['password'])
 			|| !hash_equals($certificate['fingerprintSha256'], openssl_x509_fingerprint($parts['cert'], 'sha256'))) {
@@ -289,16 +333,18 @@ class ProviderCertificateService {
 		return $registration;
 	}
 
-	private function requirePending(ProviderRegistration $registration): void {
+	private function requirePending(ProviderRegistration $registration): array {
 		if ($registration->getStatus() !== 'PENDING') {
 			throw new ProviderException('invalid_state', 'Registration is ' . $registration->getStatus() . '.', 409);
 		}
 		if ($registration->getExpiresAt() <= time()) {
 			throw new ProviderException('session_expired', 'The registration session has expired.', 410);
 		}
-		if ($this->state($registration)['attempts'] >= 5) {
+		$state = $this->state($registration);
+		if ($state['attempts'] >= 5) {
 			throw new ProviderException('session_locked', 'The confirmation attempt limit has been reached.', 409);
 		}
+		return $state;
 	}
 
 	private function subjectHash(string $clientUid, string $personalId): string {
@@ -319,10 +365,11 @@ class ProviderCertificateService {
 	}
 
 	private function replayed(ProviderRegistration $registration, string $fingerprint): array {
-		if (!hash_equals($this->state($registration)['fingerprint'], $fingerprint)) {
+		$state = $this->state($registration);
+		if (!hash_equals($state['fingerprint'], $fingerprint)) {
 			throw new ProviderException('idempotency_conflict', 'requestId was already used with different input.', 409);
 		}
-		return $this->registrationData($registration);
+		return $this->registrationData($registration, $state);
 	}
 
 	private function challenge(ProviderRegistration $registration, array $state): string {
@@ -333,8 +380,8 @@ class ProviderCertificateService {
 		], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 	}
 
-	private function registrationData(ProviderRegistration $registration): array {
-		$state = $this->state($registration);
+	private function registrationData(ProviderRegistration $registration, ?array $state = null): array {
+		$state ??= $this->state($registration);
 		$status = $registration->getStatus();
 		if ($status === 'PENDING' && $registration->getExpiresAt() <= time()) {
 			$status = 'EXPIRED';
@@ -347,15 +394,15 @@ class ProviderCertificateService {
 			$result['challengeBase64'] = base64_encode($this->challenge($registration, $state));
 		}
 		if ($status === 'ACTIVE') {
-			$result['certificate'] = $this->certificateData($registration);
+			$result['certificate'] = $this->certificateData($registration, $state);
 		}
 		return $result;
 	}
 
-	private function certificateData(ProviderRegistration $registration): array {
-		$state = $this->state($registration);
+	private function certificateData(ProviderRegistration $registration, ?array $state = null, ?\OCA\Libresign\Db\Crl $native = null): array {
+		$state ??= $this->state($registration);
 		$public = $state['certificate'];
-		$native = $this->crlMapper->findBySerialNumber($registration->getSerialNumber());
+		$native ??= $this->crlMapper->findBySerialNumber($registration->getSerialNumber());
 		return [
 			'certAlias' => $registration->getRegistrationId(), 'serialNumber' => $public['serialNumber'],
 			'fullName' => $state['input']['person']['fullName'],

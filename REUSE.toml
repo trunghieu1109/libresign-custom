@@ -9,6 +9,11 @@ default-license = "AGPL-3.0-or-later"
 default-copyright = "2020-2024 LibreCode coop and contributors"
 
 [[annotations]]
+path = "deploy/benchmarks/provider-backend-20261025.json"
+SPDX-FileCopyrightText = "2026 LibreCode coop and contributors"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+[[annotations]]
 path = ".github/CODEOWNERS"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "none"

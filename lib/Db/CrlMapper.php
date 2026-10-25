@@ -38,6 +38,21 @@ class CrlMapper extends QBMapper {
 		return $this->findEntity($qb);
 	}
 
+	/** @return array<string, Crl> Certificates indexed by serial, without caching revocation state. */
+	public function findBySerialNumbers(array $serialNumbers): array {
+		if ($serialNumbers === []) {
+			return [];
+		}
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')->from($this->getTableName())
+			->where($qb->expr()->in('serial_number', $qb->createNamedParameter(array_values(array_unique($serialNumbers)), IQueryBuilder::PARAM_STR_ARRAY)));
+		$result = [];
+		foreach ($this->findEntities($qb) as $certificate) {
+			$result[$certificate->getSerialNumber()] = $certificate;
+		}
+		return $result;
+	}
+
 	/**
 	 * Find all issued (non-revoked) certificates owned by a user
 	 *

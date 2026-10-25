@@ -68,6 +68,7 @@ class PublicSigningService {
 				'documents' => [], 'batch' => isset($body['files']), 'callbackUrl' => $callback, 'attempts' => 0, 'sendCount' => 0], 'PREPARING');
 			$total = 0;
 			$ids = [];
+			$appearanceArtifacts = [];
 			try {
 				foreach ($files as $index => $item) {
 					if (!is_array($item)) {
@@ -92,6 +93,14 @@ class PublicSigningService {
 							throw new ProviderException('batch_too_large', 'Decoded documents and images exceed the 25 MiB batch limit.', 413);
 						}
 						$document['params'] = $this->signer->prepare($content, $params);
+						foreach (['signatureImageBase64', 'stampBase64', 'logoBase64'] as $image) {
+							if (!empty($document['params'][$image])) {
+								$bytes = ProviderContract::bytes($document['params'][$image], $image, 1048576);
+								$hash = hash('sha256', $bytes);
+								$appearanceArtifacts[$hash] ??= ['artifact' => $this->artifacts->put($record['record_id'], 'appearance:' . $hash, $bytes), 'sha256' => $hash];
+								$document['params'][$image] = $appearanceArtifacts[$hash];
+							}
+						}
 						$document['inputHash'] = hash('sha256', $content);
 						$document['source'] = $this->artifacts->put($record['record_id'], $index . ':input', $content);
 					} catch (\Throwable $e) {
@@ -99,6 +108,8 @@ class PublicSigningService {
 							throw $e;
 						}
 						$document['status'] = 'FAILED';
+						// Failed files are never signed; avoid retaining unvalidated image bodies in state.
+						$document['params'] = array_diff_key($params, array_flip(['signatureImageBase64', 'stampBase64', 'logoBase64']));
 						$document['errorCode'] = $e instanceof ProviderException ? $e->error : 'PROVIDER_DOCUMENT_INVALID';
 						$document['errorMessage'] = 'Document or requested appearance could not be prepared.';
 					}
@@ -172,20 +183,11 @@ class PublicSigningService {
 		if ($person === null) {
 			throw new ProviderException('SYS-0003', 'Provide certAlias or personalIdNumber.');
 		}
-		$found = [];
-		$page = 0;
-		do {
-			$list = $this->certificates->certificates($client, $person, $page++, 100);
-			foreach ($list['items'] as $item) {
-				if ($item['status'] === 'ACTIVE') {
-					$found[] = $item['certAlias'];
-				}
-			}
-		} while ($list['hasMore']);
+		$found = $this->certificates->activeCertificates($client, $person);
 		if (count($found) !== 1) {
 			throw new ProviderException(count($found) ? 'ambiguous_certificate' : 'SYS-0031', 'Select one active certificate or complete certificate registration first.', 409);
 		}
-		return $found[0];
+		return $found[0]['certAlias'];
 	}
 
 	private function challenge(array $record): string {
@@ -271,6 +273,9 @@ class PublicSigningService {
 				return;
 			}
 			$until = microtime(true) + $budget;
+			// These fields are immutable in this locked processing pass. Check again on every resume.
+			$manifestValid = hash_equals($record['data']['manifestHash'], $this->manifestHash($record));
+			$authorizationValid = hash_equals($record['data']['authorizationHash'] ?? '', hash('sha256', $this->challenge($record)));
 			foreach ($record['data']['documents'] as $index => $document) {
 				if (!in_array($document['status'], ['PENDING', 'SIGNING'], true)) {
 					continue;
@@ -280,10 +285,10 @@ class PublicSigningService {
 				}
 				try {
 					$client = $this->workerClient($uid);
-					if (!hash_equals($record['data']['manifestHash'], $this->manifestHash($record))) {
+					if (!$manifestValid) {
 						throw new ProviderException('manifest_changed', 'Document manifest no longer matches the authorized snapshot.', 409);
 					}
-					if (!hash_equals($record['data']['authorizationHash'] ?? '', hash('sha256', $this->challenge($record)))) {
+					if (!$authorizationValid) {
 						throw new ProviderException('authorization_changed', 'Signing authorization no longer matches this request.', 409);
 					}
 					if ($record['expires_at'] <= time() || empty($record['data']['authorizedAt'])) {
@@ -299,7 +304,7 @@ class PublicSigningService {
 						throw new ProviderException('input_changed', 'Stored document digest does not match the authorized manifest.', 409);
 					}
 					$signed = $this->store->locked('certificate:' . $record['data']['alias'],
-						fn () => $this->signer->sign($client, $record['data']['alias'], $content, $document['params']));
+						fn () => $this->signer->sign($client, $record['data']['alias'], $content, $this->signingParameters($document['params'])));
 					$record['data']['documents'][$index]['result'] = $this->artifacts->put($id, $index . ':result', $signed);
 					$record['data']['documents'][$index]['outputHash'] = hash('sha256', $signed);
 					$record['data']['documents'][$index]['status'] = 'SUCCESS';
@@ -312,21 +317,41 @@ class PublicSigningService {
 			}
 			$success = count(array_filter($record['data']['documents'], fn ($document) => $document['status'] === 'SUCCESS'));
 			$record['status'] = $success === count($record['data']['documents']) ? 'SUCCESS' : ($success ? 'PARTIAL_SUCCESS' : 'FAILED');
-			$this->store->transaction(function () use (&$record, $uid): void {
-				$this->store->save($record);
+			$payload = null;
+			$client = null;
+			if ($record['data']['callbackUrl']) {
 				$clients = json_decode($this->config->getValueString('libresign', 'provider_clients', '{}'), true);
 				$client = ['uid' => $uid, 'config' => $clients[$uid] ?? []];
-				$payload = $this->view($client, $record);
-				unset($payload['challengeBase64'], $payload['email'], $payload['phone']);
-				$payload['requestId'] = $record['record_id'];
 				// An administrator may disable callback delivery after accepting a job.
 				// Terminal signing state must still be durable and available by polling.
-				if (empty($client['config']['enabled']) || !$record['data']['callbackUrl']) {
-					return;
+				if (!empty($client['config']['enabled'])) {
+					// Artifact I/O happens before acquiring the database write transaction.
+					$payload = $this->view($client, $record);
+					unset($payload['challengeBase64'], $payload['email'], $payload['phone']);
+					$payload['requestId'] = $record['record_id'];
 				}
-				$this->webhooks->queue($client, $record['data']['callbackUrl'], 'signing:' . $record['record_id'], $payload);
+			}
+			$this->store->transaction(function () use (&$record, $client, $payload): void {
+				$this->store->save($record);
+				if ($client !== null && $payload !== null) {
+					$this->webhooks->queue($client, $record['data']['callbackUrl'], 'signing:' . $record['record_id'], $payload);
+				}
 			});
 		});
+	}
+
+	private function signingParameters(array $params): array {
+		foreach (['signatureImageBase64', 'stampBase64', 'logoBase64'] as $image) {
+			// Existing authorized snapshots keep their original inline Base64 representation.
+			if (isset($params[$image]) && is_array($params[$image])) {
+				$bytes = $this->artifacts->read($params[$image]['artifact']);
+				if (!hash_equals($params[$image]['sha256'], hash('sha256', $bytes))) {
+					throw new ProviderException('input_changed', 'Stored document digest does not match the authorized manifest.', 409);
+				}
+				$params[$image] = base64_encode($bytes);
+			}
+		}
+		return $params;
 	}
 
 	private function workerClient(string $uid): array {
@@ -341,7 +366,7 @@ class PublicSigningService {
 	}
 
 	public function run(): void {
-		foreach ($this->store->jobs('signing', 'PROCESSING', 5) as $record) {
+		foreach ($this->store->jobs('signing', 'PROCESSING', 5, false) as $record) {
 			try {
 				$this->process($record['client_uid'], $record['record_id']);
 			} catch (\Throwable) {
@@ -366,9 +391,10 @@ class PublicSigningService {
 	}
 
 	public function document(array $client, string $id, string $documentId): array {
-		foreach ($this->get($client, $id)['results'] ?? [] as $document) {
+		$record = $this->store->get($client['uid'], 'signing', $id);
+		foreach ($record['data']['documents'] as $document) {
 			if ($document['id'] === $documentId) {
-				return $document;
+				return $this->documentView($document);
 			}
 		}
 		throw new ProviderException('SYS-0002', 'Document not found in this signing session.', 404);
@@ -396,9 +422,7 @@ class PublicSigningService {
 		}
 		$results = [];
 		foreach ($data['documents'] as $document) {
-			$item = array_intersect_key($document, array_flip(['id', 'index', 'documentName', 'type', 'status', 'errorCode', 'errorMessage', 'outputHash']));
-			$item['signedData'] = isset($document['result']) ? base64_encode($this->artifacts->read($document['result'])) : null;
-			$results[] = $item;
+			$results[] = $this->documentView($document);
 		}
 		$result['results'] = $results;
 		$result['successCount'] = count(array_filter($results, fn ($item) => $item['status'] === 'SUCCESS'));
@@ -409,5 +433,11 @@ class PublicSigningService {
 			$result['signedData'] = $results[0]['signedData'];
 		}
 		return $result;
+	}
+
+	private function documentView(array $document): array {
+		$item = array_intersect_key($document, array_flip(['id', 'index', 'documentName', 'type', 'status', 'errorCode', 'errorMessage', 'outputHash']));
+		$item['signedData'] = isset($document['result']) ? base64_encode($this->artifacts->read($document['result'])) : null;
+		return $item;
 	}
 }

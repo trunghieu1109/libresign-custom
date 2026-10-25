@@ -47,14 +47,11 @@ class ProviderWebhookService {
 	}
 
 	public function run(): void {
-		foreach ($this->store->jobs('event', 'PENDING') as $event) {
-			if ($event['data']['nextAt'] > time()) {
-				continue;
-			}
+		foreach ($this->store->jobs('event', 'PENDING', 20, false) as $event) {
 			try {
 				$this->store->locked('event:' . $event['record_id'], function () use ($event): void {
 					$event = $this->store->get($event['client_uid'], 'event', $event['record_id']);
-					if ($event['status'] !== 'PENDING') {
+					if ($event['status'] !== 'PENDING' || $event['data']['nextAt'] > time()) {
 						return;
 					}
 					$clients = json_decode($this->config->getValueString('libresign', 'provider_clients', '{}'), true);
